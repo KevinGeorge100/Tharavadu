@@ -28,7 +28,7 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 
 ### KIN-001: Backend Lint & Code Quality Configuration
 - **Priority:** P0
-- **Status:** READY
+- **Status:** REVIEW
 - **Goal:** Configure Ruff and resolve all 28 existing lint violations across backend Python files.
 - **Reason:** Existing `ruff check backend` fails with 28 violations due to standard FastAPI `Depends` in route signatures and regex aliases (`re.I`). Clean linting is required for CI and quality baselines.
 - **Dependencies:** None.

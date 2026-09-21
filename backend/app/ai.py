@@ -57,7 +57,7 @@ class OfflineProvider:
         name = r"([^.,!?]+?)"
 
         def person(value, gender="unspecified"):
-            value = re.sub(r"^(?:named|called)\s+", "", value.strip(), flags=re.I).strip()
+            value = re.sub(r"^(?:named|called)\s+", "", value.strip(), flags=re.IGNORECASE).strip()
             if value.lower() in ("me", "myself", "i"):
                 return "self"
             if not value or len(value) > 120 or len(value.split()) > 5:
@@ -75,7 +75,7 @@ class OfflineProvider:
         sentences = [s.strip() for s in re.split(r"[.!?]+", text) if s.strip()]
         for sentence in sentences:
             # My father Joseph has an elder brother named Thomas.
-            m = re.fullmatch(rf"My (father|mother) {name} has (?:an? )?(?:(?:elder|younger|older) )?(brother|sister)(?: named| called)? {name}", sentence, re.I)
+            m = re.fullmatch(rf"My (father|mother) {name} has (?:an? )?(?:(?:elder|younger|older) )?(brother|sister)(?: named| called)? {name}", sentence, re.IGNORECASE)
             if m:
                 role, parent, sibling_role, sibling = m.groups()
                 a = person(parent, "male" if role.lower() == "father" else "female")
@@ -83,7 +83,7 @@ class OfflineProvider:
                 edge(a, "PARENT_OF", "self")
                 edge(a, "SIBLING_OF", b)
                 continue
-            m = re.fullmatch(rf"My (father|mother|brother|sister|spouse|husband|wife)(?: is| is named| is called)? {name}", sentence, re.I)
+            m = re.fullmatch(rf"My (father|mother|brother|sister|spouse|husband|wife)(?: is| is named| is called)? {name}", sentence, re.IGNORECASE)
             if m:
                 role, value = m.groups()
                 role = role.lower()
@@ -92,7 +92,7 @@ class OfflineProvider:
                 kind = "PARENT_OF" if role in ("father", "mother") else "SIBLING_OF" if role in ("brother", "sister") else "SPOUSE_OF"
                 edge(a, kind, "self")
                 continue
-            m = re.fullmatch(rf"{name} has (?:two |three |\d+ )?children(?: named| called)? (.+)", sentence, re.I)
+            m = re.fullmatch(rf"{name} has (?:two |three |\d+ )?children(?: named| called)? (.+)", sentence, re.IGNORECASE)
             if m:
                 parent, kids = m.groups()
                 a = person(parent)
@@ -102,7 +102,7 @@ class OfflineProvider:
                 for child in children:
                     edge(a, "PARENT_OF", person(child))
                 continue
-            m = re.fullmatch(rf"{name} is (?:the )?(father|mother|parent|son|daughter|child|brother|sister|sibling|spouse|husband|wife) of {name}", sentence, re.I)
+            m = re.fullmatch(rf"{name} is (?:the )?(father|mother|parent|son|daughter|child|brother|sister|sibling|spouse|husband|wife) of {name}", sentence, re.IGNORECASE)
             if m:
                 first, role, second = m.groups()
                 role = role.lower()

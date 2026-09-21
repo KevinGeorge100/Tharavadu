@@ -64,7 +64,7 @@ The following matrix distinguishes between code existence, automated testing, in
 | :--- | :--- | :--- | :--- | :--- |
 | **Backend Import** | `python -c "import app.main"` | **PASS** | 0 | All Python modules compile and initialize FastAPI app without runtime errors. |
 | **Backend Unit Tests** | `pytest` | **FAIL (No tests)** | 1 | 0 items collected. No test directory exists. |
-| **Backend Lint** | `ruff check backend` | **FAIL (28 issues)** | 1 | 23 instances of `B008` (`Depends` in default arguments) + 5 instances of `FURB167` (`re.I` alias). |
+| **Backend Lint** | `ruff check backend` | **PASS** | 0 | All checks passed with zero errors/warnings (configured via pyproject.toml). |
 | **Backend Typecheck** | `mypy` / `pyright` | **NOT CONFIGURED** | N/A | No typechecker configuration or dependency installed. |
 | **Frontend Typecheck** | `npm run typecheck` (`tsc --noEmit`) | **PASS** | 0 | No `.ts`/`.tsx` application files present to fail. |
 | **Frontend Lint** | `npm run lint` (`eslint .`) | **PASS (Warning)** | 0 | Warns: "Pages directory cannot be found at pages or src/pages". |
@@ -88,7 +88,7 @@ The following matrix distinguishes between code existence, automated testing, in
 
 1. **Missing Test Infrastructure:** Backend domain logic (`domain.py`) contains complex graph math and cycle detection, but zero unit tests exist to prevent regressions during future development.
 2. **Missing Frontend Source:** Frontend package has installed heavy dependencies (`@xyflow/react`, `lucide-react`, `next`, `react`) but has no scaffolding, pages, components, or test harnesses.
-3. **Lint Configuration Gap:** Ruff reports `B008` on standard FastAPI dependency injection idioms because `pyproject.toml` or `ruff.toml` lacks `extend-immutable-calls = ["fastapi.Depends"]`.
+3. **Lint Configuration Gap [RESOLVED in KIN-001]:** Configured `extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]` in `pyproject.toml` and migrated regex aliases to `re.IGNORECASE`.
 4. **Graph Replacement Strategy in Neo4j:** `Neo4jGraphRepository.save()` executes a full `MATCH (p:Person) DETACH DELETE p` and reconstructs all nodes and edges per commit. While capped at 500 nodes for MVP, this approach creates large write transactions and churn in Neo4j transaction logs.
 5. **No Migration Tooling:** Schema is declared via SQLAlchemy Table objects and created with `metadata.create_all()`. No Alembic migration scripts exist for evolving database schemas.
 

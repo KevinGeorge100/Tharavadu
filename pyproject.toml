@@ -1,0 +1,5 @@
+[tool.ruff]
+line-length = 130
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]
