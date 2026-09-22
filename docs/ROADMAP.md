@@ -33,7 +33,7 @@ timeline
   - Configure Ruff in `pyproject.toml` or `ruff.toml` to recognize `fastapi.Depends` as immutable (`extend-immutable-calls`).
   - Fix regex alias warnings (`re.I` -> `re.IGNORECASE`).
   - Achieve clean `ruff check backend` with 0 warnings/errors.
-- [ ] **KIN-002 (P0): Backend Domain & Kinship Unit Test Suite**
+- [x] **KIN-002 (P0): Backend Domain & Kinship Unit Test Suite**
   - Author comprehensive `pytest` suite for `backend/app/domain.py` (kinship classification, cousins, in-laws, great-relatives).
   - Test cycle detection (circular ancestry DFS) and sibling invariants.
   - Test homonym detection and identity resolution edge cases.

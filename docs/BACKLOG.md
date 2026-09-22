@@ -41,7 +41,7 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 
 ### KIN-002: Backend Domain & Kinship Unit Test Suite
 - **Priority:** P0
-- **Status:** REVIEW
+- **Status:** DONE
 - **Goal:** Author a comprehensive, deterministic unit test suite for `backend/app/domain.py`, `backend/app/schemas.py`, and `backend/app/queries.py`.
 - **Reason:** The core value of KIN is deterministic, trustworthy kinship reasoning and cycle-free graph integrity. Currently, 0 automated tests exist in the repository.
 - **Dependencies:** KIN-001.
