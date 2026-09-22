@@ -37,7 +37,7 @@ timeline
   - Author comprehensive `pytest` suite for `backend/app/domain.py` (kinship classification, cousins, in-laws, great-relatives).
   - Test cycle detection (circular ancestry DFS) and sibling invariants.
   - Test homonym detection and identity resolution edge cases.
-- [ ] **KIN-003 (P0): Environment & Developer Configuration**
+- [x] **KIN-003 (P0): Environment & Developer Configuration**
   - Create `.env.example` documenting all configuration options (`DATABASE_URL`, `GRAPH_BACKEND`, `AI_PROVIDER`, `OPENAI_API_KEY`, `APP_ORIGIN`, etc.).
   - Document local setup commands in a top-level `README.md`.
 

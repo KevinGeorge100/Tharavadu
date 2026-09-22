@@ -58,7 +58,7 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 
 ### KIN-003: Environment & Local Development Configuration
 - **Priority:** P0
-- **Status:** REVIEW
+- **Status:** DONE
 - **Goal:** Create `.env.example` and top-level `README.md` documenting environment configuration and setup instructions.
 - **Reason:** Currently no environment templates exist, and running the project requires understanding implicit defaults in `backend/app/config.py`.
 - **Dependencies:** None.
