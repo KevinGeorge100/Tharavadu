@@ -13,8 +13,8 @@ KIN is an AI-assisted personal genealogy and kinship reasoning system designed t
 The repository currently exhibits a significant asymmetry:
 - **Backend (`backend/app/`):** Contains a tightly scoped, functioning prototype implementation of deterministic kinship reasoning (`domain.py`, `queries.py`), schema validation (`schemas.py`), dual AI extraction providers (`ai.py` supporting offline regex and OpenAI structured outputs), dual graph backends (`database.py` supporting SQLite snapshot and Neo4j atomic graph replacement), and session-based FastAPI endpoints (`main.py`).
 - **Frontend (`frontend/`):** Contains only package and build tooling manifests (`package.json`, `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `node_modules`). **No application source files (pages, components, layouts, styles) exist.** Running `next build` fails immediately.
-- **Testing & Quality Assurance:** **Zero automated tests exist in the entire repository.** `pytest` reports 0 tests ran. `playwright` reports no tests found. Backend code triggers 28 Ruff lint violations (primarily idiomatic FastAPI `Depends` usage requiring Ruff bugbear configuration and regex aliases).
-- **Git State:** Newly initialized Git repository with no prior commits on branch `master`.
+- **Testing & Quality Assurance:** Deterministic domain unit test suite established (88 tests in `backend/tests/`, 100% passing). API integration tests and Playwright E2E tests are not yet configured.
+- **Git State:** Newly initialized Git repository with active development branches off `main`.
 
 ---
 
@@ -22,12 +22,12 @@ The repository currently exhibits a significant asymmetry:
 
 | Dimension | Assessment | Evidence |
 | :--- | :--- | :--- |
-| **Overall Maturity** | **FUNCTIONAL PROTOTYPE (Backend) / SKELETON (Frontend)** | Backend logic imports and handles API lifecycles; frontend UI is completely unwritten; automated test coverage is 0%. |
-| **Domain Logic** | **FUNCTIONAL PROTOTYPE** | Kinship classification, ancestry cycle detection, and identity resolution algorithms are fully codified in Python. |
+| **Overall Maturity** | **FUNCTIONAL PROTOTYPE (Backend) / SKELETON (Frontend)** | Backend logic imports and handles API lifecycles; frontend UI is completely unwritten; backend domain test coverage is 100%. |
+| **Domain Logic** | **FUNCTIONAL PROTOTYPE** | Kinship classification, ancestry cycle detection, and identity resolution algorithms are fully codified in Python and covered by 88 unit tests. |
 | **AI Integration** | **PARTIALLY IMPLEMENTED / PROPOSAL-ONLY** | Dual extraction paths exist (offline regex and OpenAI structured outputs). Both produce `Extraction` proposals; direct write access to the graph is prohibited by design. |
 | **Persistence** | **FUNCTIONAL PROTOTYPE (Local) / UNVERIFIED (Neo4j/Postgres)** | SQLite schema initialization and local snapshot storage work; Neo4j repository code exists but lacks integration test coverage. |
 | **Frontend UI** | **NOT IMPLEMENTED / SKELETON** | No `app/` or `pages/` directory exists. Dependencies (`@xyflow/react`, `lucide-react`, `next`, `react`) are installed in `node_modules` but unrendered. |
-| **Automated Testing** | **NOT CONFIGURED** | No test files exist (`tests/` directory absent). Pytest and Playwright suites return 0 tests. |
+| **Automated Testing** | **FUNCTIONAL PROTOTYPE (Backend Domain)** | 88 pytest unit tests pass covering validation, cycle detection, kinship classification, queries, and schemas. E2E tests unconfigured. |
 
 ---
 
@@ -63,7 +63,7 @@ The following matrix distinguishes between code existence, automated testing, in
 | Tool / Check | Command Executed | Result | Exit Code | Details |
 | :--- | :--- | :--- | :--- | :--- |
 | **Backend Import** | `python -c "import app.main"` | **PASS** | 0 | All Python modules compile and initialize FastAPI app without runtime errors. |
-| **Backend Unit Tests** | `pytest` | **FAIL (No tests)** | 1 | 0 items collected. No test directory exists. |
+| **Backend Unit Tests** | `pytest` | **PASS** | 0 | 88 items collected, 88 passed across domain, kinship, query, and schema test modules. |
 | **Backend Lint** | `ruff check backend` | **PASS** | 0 | All checks passed with zero errors/warnings (configured via pyproject.toml). |
 | **Backend Typecheck** | `mypy` / `pyright` | **NOT CONFIGURED** | N/A | No typechecker configuration or dependency installed. |
 | **Frontend Typecheck** | `npm run typecheck` (`tsc --noEmit`) | **PASS** | 0 | No `.ts`/`.tsx` application files present to fail. |
