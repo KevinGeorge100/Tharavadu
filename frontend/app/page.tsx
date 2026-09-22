@@ -1,73 +1,94 @@
 "use client";
 
 import React, { useState, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
-import { FamilyCanvas } from "@/components/family/family-canvas";
 import { AlbumStarter } from "@/components/onboarding/album-starter";
 import { KinComposer } from "@/components/kin/kin-composer";
 import { ExtractionPreview } from "@/components/kin/extraction-preview";
+import { IdentityCollision, CollisionChoice } from "@/components/kin/identity-collision";
 import { DEMO_PROMPT_STORIES, DemoPromptStory, ExtractionCandidate } from "@/data/demo-stories";
-import { User, Users } from "lucide-react";
+
+const FamilyCanvas = dynamic(
+  () => import("@/components/family/family-canvas").then((mod) => mod.FamilyCanvas),
+  { ssr: false }
+);
 
 function KinAppContent() {
   const searchParams = useSearchParams();
 
-  // Query parameter state mapping
   const urlMode = searchParams.get("mode");
   const urlStep = searchParams.get("step");
   const urlSelected = searchParams.get("selected");
   const urlDiscovery = searchParams.get("discovery");
   const urlExtract = searchParams.get("extract");
   const urlBranchAdded = searchParams.get("branchAdded") === "true";
+  const urlCollision = searchParams.get("collision") === "true";
 
-  const [mode, setMode] = useState<"demo" | "first-run">(
-    urlMode === "first-run" ? "first-run" : "demo"
-  );
-  const [starterStep, setStarterStep] = useState<"empty" | "anchor">(
-    urlStep === "anchor" ? "anchor" : "empty"
-  );
+  const [mode, setMode] = useState<"demo" | "first-run">(urlMode === "first-run" ? "first-run" : "demo");
+  const [starterStep, setStarterStep] = useState<"empty" | "anchor">(urlStep === "anchor" ? "anchor" : "empty");
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(urlSelected || null);
   const [discoveryKey, setDiscoveryKey] = useState<string | null>(urlDiscovery || null);
   const [branchAdded, setBranchAdded] = useState(urlBranchAdded);
+  const [collisionOpen, setCollisionOpen] = useState(urlCollision);
+  const [collisionNote, setCollisionNote] = useState<string | null>(null);
 
-  // Active AI extraction simulation candidate
   const initialCandidate: ExtractionCandidate | null =
     urlExtract === "joseph" ? DEMO_PROMPT_STORIES[0].candidate : null;
   const [activeExtraction, setActiveExtraction] = useState<ExtractionCandidate | null>(initialCandidate);
 
-  // Story submission handler
   const handleStorySubmitted = (storyText: string) => {
-    // Check if matching preset story or generic family story
-    const matched = DEMO_PROMPT_STORIES.find((item) =>
-      storyText.toLowerCase().includes("joseph") ||
-      storyText.toLowerCase().includes("brother") ||
-      item.storyText.toLowerCase() === storyText.toLowerCase()
+    const lower = storyText.toLowerCase();
+    if (lower.includes("george")) {
+      setActiveExtraction(null);
+      setCollisionOpen(true);
+      return;
+    }
+
+    const matched = DEMO_PROMPT_STORIES.find(
+      (item) =>
+        lower.includes("joseph") ||
+        lower.includes("brother") ||
+        item.storyText.toLowerCase() === lower
     );
 
-    if (matched) {
-      setActiveExtraction(matched.candidate);
-    } else {
+    if (matched) setActiveExtraction(matched.candidate);
+    else {
       setActiveExtraction({
-        primaryName: "New Family Memory",
-        primaryRole: "Spoken Story",
-        relatives: [
-          { name: "Family Archive", relation: "Oral History" },
-        ],
+        primaryName: "Spoken story",
+        primaryRole: "family note",
+        relatives: [{ name: "Someone KIN heard", relation: "mentioned" }],
         peopleCount: 1,
         connectionCount: 1,
-        explanation: `KIN extracted candidate relationships from: "${storyText.slice(0, 40)}..."`,
+        explanation: storyText,
       });
     }
   };
 
   const handlePromptStorySelect = (promptStory: DemoPromptStory) => {
+    if (promptStory.id === "two-georges") {
+      setActiveExtraction(null);
+      setCollisionOpen(true);
+      return;
+    }
     setActiveExtraction(promptStory.candidate);
   };
 
   const handleAcceptExtraction = () => {
     setBranchAdded(true);
     setActiveExtraction(null);
+  };
+
+  const handleCollision = (choice: CollisionChoice) => {
+    const labels: Record<CollisionChoice, string> = {
+      "george-davis": "George Davis — Dad's cousin",
+      "george-miller": "George Miller — Grandpa's brother",
+      new: "Someone new",
+    };
+    setCollisionNote(`${labels[choice]} noted. KIN will wait for you to confirm.`);
+    setCollisionOpen(false);
+    window.setTimeout(() => setCollisionNote(null), 2400);
   };
 
   return (
@@ -83,120 +104,57 @@ function KinAppContent() {
         backgroundColor: "var(--bg-canvas)",
       }}
     >
-      {/* Texture Background */}
       <div className="kin-canvas-bg" />
 
-      {/* Minimal Top Bar Chrome */}
       <header
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "10px 18px",
+          padding: "8px 12px",
           zIndex: 30,
           flexShrink: 0,
-          borderBottom: "1px solid var(--border-subtle)",
-          backgroundColor: "rgba(252, 248, 241, 0.85)",
-          backdropFilter: "blur(8px)",
         }}
       >
-        {/* Brand & Wordmark */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <BrandMark size={28} />
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span
-                style={{
-                  fontFamily: "var(--font-serif)",
-                  fontSize: "1.25rem",
-                  fontWeight: 700,
-                  letterSpacing: "-0.01em",
-                  color: "var(--text-primary)",
-                  lineHeight: 1.1,
-                }}
-              >
-                KIN
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-serif)",
-                  fontStyle: "italic",
-                  fontSize: "0.82rem",
-                  color: "var(--text-muted)",
-                }}
-              >
-                · {mode === "demo" ? "The Davis Family Constellation" : "Personal Album Starter"}
-              </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <BrandMark size={30} />
+          <div>
+            <div className="kin-stamp" style={{ fontSize: "1rem", lineHeight: 1 }}>
+              KIN
+            </div>
+            <div style={{ fontFamily: "var(--font-serif)", fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+              {mode === "demo" ? "Demo Family" : "New album"}
             </div>
           </div>
         </div>
 
-        {/* Mode Switcher Affordance */}
-        <div
-          style={{
-            display: "inline-flex",
-            backgroundColor: "var(--bg-surface)",
-            border: "1px solid var(--border-default)",
-            borderRadius: "var(--radius-full)",
-            padding: "3px",
-            gap: "3px",
-            boxShadow: "var(--shadow-sm)",
-          }}
-          role="tablist"
-          aria-label="Family canvas view modes"
-        >
+        <div style={{ display: "flex", gap: 6 }}>
           <button
+            type="button"
+            className={mode === "demo" ? "kin-press" : "kin-press-ghost"}
             onClick={() => {
               setMode("demo");
               setSelectedPersonId(null);
               setDiscoveryKey(null);
             }}
-            role="tab"
-            aria-selected={mode === "demo"}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              padding: "5px 14px",
-              borderRadius: "var(--radius-full)",
-              fontSize: "0.82rem",
-              fontWeight: 600,
-              color: mode === "demo" ? "var(--text-inverted)" : "var(--text-secondary)",
-              backgroundColor: mode === "demo" ? "var(--accent-warm)" : "transparent",
-              transition: "all var(--duration-fast)",
-            }}
+            style={{ minHeight: 44, padding: "8px 12px", fontSize: "0.68rem" }}
           >
-            <Users size={14} />
-            <span>Family Canvas</span>
+            Family
           </button>
-
           <button
+            type="button"
+            className={mode === "first-run" ? "kin-press" : "kin-press-ghost"}
             onClick={() => {
               setMode("first-run");
               setStarterStep("empty");
             }}
-            role="tab"
-            aria-selected={mode === "first-run"}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              padding: "5px 14px",
-              borderRadius: "var(--radius-full)",
-              fontSize: "0.82rem",
-              fontWeight: 600,
-              color: mode === "first-run" ? "var(--text-inverted)" : "var(--text-secondary)",
-              backgroundColor: mode === "first-run" ? "var(--accent-warm)" : "transparent",
-              transition: "all var(--duration-fast)",
-            }}
+            style={{ minHeight: 44, padding: "8px 12px", fontSize: "0.68rem" }}
           >
-            <User size={14} />
-            <span>Start Fresh</span>
+            New album
           </button>
         </div>
       </header>
 
-      {/* Main Family Canvas Experience (Dominates 85%+ of screen) */}
       <main style={{ flex: 1, position: "relative", minHeight: 0 }}>
         {mode === "demo" ? (
           <FamilyCanvas
@@ -213,18 +171,15 @@ function KinAppContent() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: "20px",
+              padding: 20,
               overflowY: "auto",
             }}
           >
             <AlbumStarter
+              key={starterStep}
               initialStep={starterStep}
-              onAnchorCreated={() => {
-                setStarterStep("anchor");
-              }}
-              onAddRelativeSlot={(role) => {
-                alert(`[Demo Slot] Staging ghost card for ${role}. In KIN milestone 5, this creates a local entity proposal.`);
-              }}
+              onAnchorCreated={() => setStarterStep("anchor")}
+              onAddRelativeSlot={() => undefined}
               onTryStarterStory={(storyText) => {
                 setMode("demo");
                 handleStorySubmitted(storyText);
@@ -237,14 +192,32 @@ function KinAppContent() {
           </div>
         )}
 
-        {/* Demo AI Extraction Preview Modal (Materializes when story analyzed) */}
+        {collisionOpen && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+              zIndex: 40,
+              background: "rgba(22, 19, 16, 0.28)",
+            }}
+          >
+            <IdentityCollision onChoose={handleCollision} onDismiss={() => setCollisionOpen(false)} />
+          </div>
+        )}
+
+        {collisionNote && <div className="kin-bloom-label">{collisionNote}</div>}
+
         {activeExtraction && (
           <div
             style={{
               position: "absolute",
-              bottom: "100px",
-              left: "16px",
-              right: "16px",
+              bottom: 108,
+              left: 16,
+              right: 16,
               display: "flex",
               justifyContent: "center",
               zIndex: 35,
@@ -258,24 +231,19 @@ function KinAppContent() {
           </div>
         )}
 
-        {/* Floating Conversational AI Story Note Strip (Pinned to Lower Center) */}
-        {mode === "demo" && !activeExtraction && (
+        {mode === "demo" && !activeExtraction && !collisionOpen && (
           <div
             style={{
               position: "absolute",
-              bottom: "16px",
-              left: "16px",
-              right: "16px",
+              bottom: 12,
+              left: 12,
+              right: 12,
               display: "flex",
               justifyContent: "center",
-              pointerEvents: "auto",
               zIndex: 20,
             }}
           >
-            <KinComposer
-              onSubmitStory={handleStorySubmitted}
-              onSelectPromptStory={handlePromptStorySelect}
-            />
+            <KinComposer onSubmitStory={handleStorySubmitted} onSelectPromptStory={handlePromptStorySelect} />
           </div>
         )}
       </main>

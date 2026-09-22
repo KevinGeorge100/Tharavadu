@@ -1,12 +1,13 @@
 "use client";
 
 import React, { memo } from "react";
-import { BaseEdge, EdgeProps, getBezierPath } from "@xyflow/react";
+import { BaseEdge, EdgeProps, getBezierPath, getStraightPath } from "@xyflow/react";
 
 export interface KinshipEdgeData {
   relationshipType?: "parent" | "spouse" | "sibling";
   isPathHighlighted?: boolean;
   isSelectedConnected?: boolean;
+  isGrowing?: boolean;
   branchColor?: string;
 }
 
@@ -26,38 +27,46 @@ export const KinshipRelationshipEdge = memo(function KinshipRelationshipEdge({
   const isPath = edgeData?.isPathHighlighted;
   const isConnected = edgeData?.isSelectedConnected;
   const isSpouse = edgeData?.relationshipType === "spouse";
+  const isSibling = edgeData?.relationshipType === "sibling";
+  const isGrowing = edgeData?.isGrowing;
 
-  // Art Nouveau flowing Bezier curve with gentle organic curvature
-  const [edgePath] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-    curvature: 0.28,
-  });
+  const [edgePath] = isSpouse
+    ? getStraightPath({ sourceX, sourceY, targetX, targetY })
+    : getBezierPath({
+        sourceX,
+        sourceY,
+        sourcePosition,
+        targetX,
+        targetY,
+        targetPosition,
+        curvature: isSibling ? 0.55 : 0.38,
+      });
 
   const strokeColor = isPath
     ? "var(--accent-warm)"
     : isConnected
-    ? "var(--accent-warm)"
-    : "rgba(31, 28, 24, 0.22)";
+      ? "var(--ink)"
+      : isSpouse
+        ? "var(--branch-rose)"
+        : isSibling
+          ? "var(--branch-blue)"
+          : "var(--ink-soft)";
 
-  const strokeWidth = isPath ? 3.2 : isConnected ? 2.4 : 1.6;
-  const strokeDash = isSpouse ? "5 4" : isPath ? "6 3" : undefined;
-  const opacity = isPath ? 1 : isConnected ? 0.95 : 0.65;
+  const strokeWidth = isPath ? 4.4 : isConnected ? 3.2 : isSpouse ? 2.8 : 2.4;
+  const strokeDash = isSibling ? "7 5" : undefined;
 
   return (
     <>
-      {/* Background glow when path illuminated */}
       {isPath && (
+        <path d={edgePath} fill="none" stroke="var(--accent-warm)" strokeWidth={10} opacity={0.22} />
+      )}
+      {isSpouse && (
         <path
           d={edgePath}
           fill="none"
-          stroke="var(--accent-warm-soft)"
-          strokeWidth={8}
-          opacity={0.8}
+          stroke="var(--ink)"
+          strokeWidth={strokeWidth + 3}
+          opacity={0.18}
         />
       )}
       <BaseEdge
@@ -68,9 +77,11 @@ export const KinshipRelationshipEdge = memo(function KinshipRelationshipEdge({
           ...style,
           stroke: strokeColor,
           strokeWidth,
-          strokeDasharray: strokeDash,
-          opacity,
-          transition: "stroke var(--duration-fast), stroke-width var(--duration-fast), opacity var(--duration-fast)",
+          strokeDasharray: isGrowing ? "8 6" : strokeDash,
+          strokeLinecap: "round",
+          opacity: 1,
+          animation: isGrowing ? "kin-grow-line 700ms var(--ease-natural) both" : undefined,
+          transition: "stroke var(--duration-fast), stroke-width var(--duration-fast)",
         }}
       />
     </>

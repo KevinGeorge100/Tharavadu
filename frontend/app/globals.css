@@ -1,104 +1,110 @@
 /* =============================================================================
-   KIN — Warm Scrapbook, Art Nouveau & Mid-Century Family Design System
+   KIN V4 — Living Heirloom Playground
+   Bold UI + human artifacts + organic relationships
    ============================================================================= */
 
 @import "@xyflow/react/dist/style.css";
 
 :root {
-  /* Canvas & Parchment Surfaces */
-  --bg-canvas: #fcf8f1;
-  --bg-canvas-subtle: #f5eedf;
-  --bg-surface: #ffffff;
-  --bg-surface-warm: #fcf9f4;
-  --bg-surface-elevated: #ffffff;
-  --bg-surface-card: #fffdf9;
-  --bg-surface-hover: #f7f1e6;
-  --bg-surface-active: #ebe2d3;
-  --bg-archival-note: #fefcf4;
+  --ink: #161310;
+  --ink-soft: #2a241c;
+  --paper: #f3e6cf;
+  --paper-deep: #e8d4b0;
+  --cream: #faf1de;
+  --cream-hot: #fff8ea;
 
-  /* Ink Typography */
-  --text-primary: #1f1c18;
-  --text-secondary: #484138;
-  --text-muted: #787065;
-  --text-faint: #a69e94;
-  --text-inverted: #ffffff;
+  --bg-canvas: #f3e6cf;
+  --bg-canvas-subtle: #ead9b8;
+  --bg-surface: #fff8ea;
+  --bg-surface-warm: #faf1de;
+  --bg-surface-elevated: #fffdf6;
+  --bg-surface-card: #fff8ea;
+  --bg-surface-hover: #f0e0c4;
+  --bg-surface-active: #e4d0aa;
+  --bg-archival-note: #fff6dc;
 
-  /* Primary Warm Accent: Burnt Orange / Terracotta */
-  --accent-warm: #d46022;
-  --accent-warm-hover: #b84e15;
-  --accent-warm-soft: #fdeee6;
-  --accent-warm-border: #f2caa7;
-  --accent-warm-ring: rgba(212, 96, 34, 0.28);
+  --text-primary: #161310;
+  --text-secondary: #3a3228;
+  --text-muted: #6b5e4e;
+  --text-faint: #8d7f6c;
+  --text-inverted: #fff8ea;
 
-  /* Mid-Century Family Branch Palette */
-  --branch-terracotta: #c85a32;
-  --branch-terracotta-soft: #fcefe9;
-  --branch-terracotta-border: #e8bbae;
+  --accent-warm: #e04d12;
+  --accent-warm-hover: #c03e0c;
+  --accent-warm-soft: #ffd8c4;
+  --accent-warm-border: #e04d12;
+  --accent-warm-ring: rgba(224, 77, 18, 0.35);
 
-  --branch-sage: #3d6b4f;
-  --branch-sage-soft: #eaf3ed;
-  --branch-sage-border: #b5d5c0;
+  --branch-terracotta: #c44a28;
+  --branch-terracotta-soft: #f8d8cc;
+  --branch-terracotta-border: #c44a28;
 
-  --branch-blue: #2c5d88;
-  --branch-blue-soft: #e7f0f7;
-  --branch-blue-border: #acc9e2;
+  --branch-sage: #3d6d46;
+  --branch-sage-soft: #d5ead6;
+  --branch-sage-border: #3d6d46;
 
-  --branch-mustard: #b27b18;
-  --branch-mustard-soft: #faf4e4;
-  --branch-mustard-border: #e6d39a;
+  --branch-blue: #355f86;
+  --branch-blue-soft: #d3e3f2;
+  --branch-blue-border: #355f86;
 
-  --branch-rose: #a84858;
-  --branch-rose-soft: #fbebee;
-  --branch-rose-border: #e4b4bd;
+  --branch-mustard: #d39212;
+  --branch-mustard-soft: #fbe6b0;
+  --branch-mustard-border: #b87a08;
 
-  --branch-violet: #583b70;
-  --branch-violet-soft: #f1ecf7;
-  --branch-violet-border: #cabbe0;
+  --branch-rose: #b4334c;
+  --branch-rose-soft: #f6d0d6;
+  --branch-rose-border: #b4334c;
 
-  /* Borders & Rules */
-  --border-subtle: rgba(31, 28, 24, 0.08);
-  --border-default: rgba(31, 28, 24, 0.16);
-  --border-strong: rgba(31, 28, 24, 0.32);
-  --border-warm: #decbb3;
+  --branch-violet: #5a3874;
+  --branch-violet-soft: #e4d4f0;
+  --branch-violet-border: #5a3874;
 
-  /* Shadows (Paper & Scrapbook Depth) */
-  --shadow-sm: 0 1px 3px rgba(31, 28, 24, 0.06), 0 1px 2px rgba(31, 28, 24, 0.04);
-  --shadow-md: 0 4px 10px rgba(31, 28, 24, 0.08), 0 2px 4px rgba(31, 28, 24, 0.05);
-  --shadow-lg: 0 10px 24px rgba(31, 28, 24, 0.11), 0 3px 8px rgba(31, 28, 24, 0.06);
-  --shadow-card: 0 3px 12px rgba(45, 35, 25, 0.09), 0 1px 3px rgba(45, 35, 25, 0.05);
-  --shadow-selected: 0 0 0 3px var(--accent-warm-ring), 0 12px 28px rgba(212, 96, 34, 0.18), 0 3px 8px rgba(31, 28, 24, 0.08);
+  --border-subtle: rgba(22, 19, 16, 0.12);
+  --border-default: var(--ink);
+  --border-strong: var(--ink);
+  --border-warm: #c9a56a;
 
-  /* Border Radii */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 22px;
+  --outline-thin: 1.5px;
+  --outline-medium: 2.5px;
+  --outline-heavy: 3.5px;
+
+  --shadow-rest: 4px 4px 0 var(--ink);
+  --shadow-raised: 7px 7px 0 var(--ink);
+  --shadow-pressed: 2px 2px 0 var(--ink);
+  --shadow-paper: 3px 4px 0 rgba(22, 19, 16, 0.18);
+  --shadow-sm: 3px 3px 0 var(--ink);
+  --shadow-md: 4px 4px 0 var(--ink);
+  --shadow-lg: 7px 7px 0 var(--ink);
+  --shadow-card: 4px 4px 0 var(--ink);
+  --shadow-selected: 7px 7px 0 var(--ink);
+
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
   --radius-full: 9999px;
 
-  /* Typography Stacks */
-  --font-serif: "Playfair Display", "Baskerville", "Georgia", "Cambria", "Times New Roman", serif;
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Palatino Linotype", Palatino, "Book Antiqua", "Iowan Old Style", "Times New Roman", serif;
+  --font-sans: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Motion Curves */
-  --duration-fast: 150ms;
-  --duration-normal: 250ms;
-  --duration-slow: 400ms;
-  --ease-natural: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 140ms;
+  --duration-normal: 280ms;
+  --duration-slow: 480ms;
+  --ease-natural: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* =============================================================================
-   Base & Reset
-   ============================================================================= */
-
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   font-family: var(--font-sans);
@@ -110,22 +116,39 @@ html, body {
   overflow: hidden;
 }
 
-/* Scrapbook Paper Texture Background (Pure CSS radial dots & faint warm fiber) */
 .kin-canvas-bg {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: 
-    radial-gradient(rgba(31, 28, 24, 0.07) 1.2px, transparent 1.2px),
-    linear-gradient(to right, rgba(212, 96, 34, 0.015) 1px, transparent 1px);
-  background-size: 24px 24px, 120px 120px;
-  opacity: 0.85;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(rgba(22, 19, 16, 0.055) 0.9px, transparent 0.9px),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 47px,
+      rgba(22, 19, 16, 0.03) 47px,
+      rgba(22, 19, 16, 0.03) 48px
+    );
+  background-size: 18px 18px, 100% 48px;
+  opacity: 0.9;
   z-index: 0;
 }
 
-/* Accessibility Focus Ring */
+.kin-canvas-bg::after {
+  content: "FAMILY BOARD  ·  DEMO  ·  KEEP";
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: rgba(22, 19, 16, 0.18);
+}
+
 :focus-visible {
-  outline: 2px solid var(--accent-warm);
+  outline: 3px solid var(--accent-warm);
   outline-offset: 3px;
 }
 
@@ -143,57 +166,91 @@ a {
   text-decoration: none;
 }
 
-/* =============================================================================
-   Scrapbook Motifs & Artifact Styling
-   ============================================================================= */
-
-/* Photo Corner Accents */
-.photo-card-frame {
-  position: relative;
-  background: #fdfaf4;
-  border: 1px solid var(--border-default);
-  box-shadow: var(--shadow-card);
-  transition: transform var(--duration-normal) var(--ease-natural), box-shadow var(--duration-normal) var(--ease-natural);
+.kin-stamp {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-/* Wabi-Sabi Tape Accent */
+.kin-press {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-inverted);
+  background: var(--accent-warm);
+  border: var(--outline-heavy) solid var(--ink);
+  box-shadow: var(--shadow-rest);
+  transform: translate(0, 0);
+  transition:
+    transform var(--duration-fast) var(--ease-natural),
+    box-shadow var(--duration-fast) var(--ease-natural),
+    background-color var(--duration-fast);
+}
+
+.kin-press:hover:not(:disabled) {
+  background: var(--accent-warm-hover);
+}
+
+.kin-press:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-pressed);
+}
+
+.kin-press:disabled {
+  background: var(--paper-deep);
+  color: var(--text-muted);
+  cursor: default;
+  box-shadow: var(--shadow-pressed);
+}
+
+.kin-press-ghost {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--cream-hot);
+  border: var(--outline-medium) solid var(--ink);
+  box-shadow: var(--shadow-rest);
+  transition:
+    transform var(--duration-fast) var(--ease-natural),
+    box-shadow var(--duration-fast) var(--ease-natural);
+}
+
+.kin-press-ghost:hover {
+  background: var(--branch-mustard-soft);
+}
+
+.kin-press-ghost:active {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-pressed);
+}
+
 .tape-strip {
   position: absolute;
-  top: -9px;
+  top: -10px;
   left: 50%;
-  transform: translateX(-50%) rotate(-1.5deg);
-  width: 50px;
+  transform: translateX(-50%) rotate(-2.4deg);
+  width: 54px;
   height: 16px;
-  background-color: rgba(235, 222, 195, 0.85);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  border-left: 1px dashed rgba(180, 160, 130, 0.4);
-  border-right: 1px dashed rgba(180, 160, 130, 0.4);
+  background-color: rgba(232, 196, 92, 0.72);
+  border: 1px solid rgba(22, 19, 16, 0.18);
+  box-shadow: 1px 1px 0 rgba(22, 19, 16, 0.12);
   pointer-events: none;
   z-index: 5;
 }
 
-/* Scrapbook Archival Tag */
-.archival-tag {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  letter-spacing: 0.01em;
-}
-
-/* Memory Pin Motif */
 .memory-pin {
-  width: 10px;
-  height: 10px;
-  border-radius: var(--radius-full);
-  background: #c85a32;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #c44a28;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
   display: inline-block;
 }
-
-/* =============================================================================
-   React Flow Custom Theming (Warm Scrapbook Overrides)
-   ============================================================================= */
 
 .react-flow__pane {
   cursor: grab;
@@ -203,59 +260,117 @@ a {
   cursor: grabbing;
 }
 
-/* Remove default selection box / attribution border clutter */
+.react-flow__node {
+  cursor: pointer;
+}
+
 .react-flow__attribution {
-  background: rgba(252, 248, 241, 0.7) !important;
+  background: var(--cream) !important;
   padding: 2px 6px !important;
   font-size: 9px !important;
   color: var(--text-faint) !important;
-  border-radius: var(--radius-sm) !important;
-  border: 1px solid var(--border-subtle) !important;
+  border: var(--outline-thin) solid var(--ink) !important;
+  box-shadow: 2px 2px 0 var(--ink) !important;
 }
 
-.react-flow__attribution a {
-  color: var(--text-muted) !important;
-}
-
-/* Custom Minimal Floating Controls */
 .kin-controls-bar {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: 14px;
+  right: 14px;
   display: inline-flex;
   align-items: center;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-full);
+  background: var(--cream-hot);
+  border: var(--outline-medium) solid var(--ink);
   padding: 4px;
   gap: 4px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-rest);
   z-index: 20;
 }
 
 .kin-control-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
-  transition: all var(--duration-fast);
+  color: var(--ink);
+  border: var(--outline-thin) solid transparent;
 }
 
 .kin-control-btn:hover {
-  background-color: var(--bg-surface-hover);
-  color: var(--text-primary);
+  background-color: var(--branch-mustard-soft);
 }
 
-/* =============================================================================
-   Responsive & Accessibility Overrides
-   ============================================================================= */
+.kin-control-btn:active {
+  transform: translate(1px, 1px);
+}
+
+.kin-bloom-label {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.5deg);
+  z-index: 40;
+  background: var(--branch-mustard);
+  color: var(--ink);
+  border: var(--outline-heavy) solid var(--ink);
+  box-shadow: var(--shadow-raised);
+  padding: 8px 16px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  animation: kin-settle var(--duration-slow) var(--ease-natural) both;
+}
+
+@keyframes kin-settle {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px) rotate(-3deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) rotate(-1.5deg);
+  }
+}
+
+@keyframes kin-unfold {
+  from {
+    opacity: 0;
+    transform: rotate(-8deg) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--bloom-rot, -2deg)) scale(1);
+  }
+}
+
+@keyframes kin-grow-line {
+  from {
+    stroke-dashoffset: 180;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.kin-blooming-card {
+  animation: kin-settle var(--duration-slow) var(--ease-natural) both;
+}
+
+.kin-memory-bloom {
+  animation: kin-unfold var(--duration-slow) var(--ease-natural) both;
+}
 
 @media (max-width: 768px) {
   .kin-desktop-inspector {
     display: none;
+  }
+
+  .kin-bloom-label {
+    top: 8px;
+    font-size: 0.72rem;
   }
 }
 
@@ -265,9 +380,10 @@ a {
   }
 }
 
-/* Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

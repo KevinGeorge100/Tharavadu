@@ -9,16 +9,11 @@ import {
   useReactFlow,
   Node,
   Edge,
-  Background,
-  BackgroundVariant,
+  Viewport,
 } from "@xyflow/react";
-import {
-  INITIAL_DEMO_MEMBERS,
-  DEMO_EXTRACTION_BRANCH,
-  DEMO_MEMORIES,
-} from "@/data/demo-family";
-import { DEMO_DISCOVERY_PATHS, DiscoveryPath } from "@/data/demo-paths";
-import { PersonNode, PersonNodeData } from "@/components/family/person-node";
+import { INITIAL_DEMO_MEMBERS, DEMO_EXTRACTION_BRANCH, DEMO_MEMORIES } from "@/data/demo-family";
+import { DEMO_DISCOVERY_PATHS, DiscoveryPath, findDemoPath } from "@/data/demo-paths";
+import { PersonNode, PersonNodeData, ZoomBand } from "@/components/family/person-node";
 import { MemoryArtifactNode, MemoryNodeData } from "@/components/family/memory-artifact-node";
 import { KinshipRelationshipEdge } from "@/components/family/relationship-edge";
 import { PersonFocusDrawer } from "@/components/family/person-focus-drawer";
@@ -41,13 +36,32 @@ const edgeTypes = {
   kinshipEdge: KinshipRelationshipEdge,
 };
 
+const POSITIONS: Record<string, { x: number; y: number }> = {
+  arthur: { x: 40, y: 16 },
+  eleanor: { x: 360, y: 8 },
+  julian: { x: 80, y: 268 },
+  clara: { x: 340, y: 276 },
+  nora: { x: 0, y: 520 },
+  leo: { x: 220, y: 508 },
+  maya: { x: 440, y: 528 },
+  joseph: { x: -280, y: 16 },
+  mathew: { x: -500, y: 36 },
+  thomas: { x: -720, y: 16 },
+};
+
+function zoomToBand(zoom: number): ZoomBand {
+  if (zoom < 0.68) return "far";
+  if (zoom > 1.12) return "close";
+  return "medium";
+}
+
 function FamilyCanvasInner({
   initialSelectedId = null,
   initialDiscoveryPathKey = null,
   isNewBranchAdded = false,
   onSelectPerson: propOnSelectPerson,
 }: FamilyCanvasProps) {
-  const { fitView, zoomIn, zoomOut } = useReactFlow();
+  const { fitView, zoomIn, zoomOut, setCenter, getNode } = useReactFlow();
 
   const [internalSelectedPersonId, setInternalSelectedPersonId] = useState<string | null>(initialSelectedId);
   const selectedPersonId = initialSelectedId !== undefined ? initialSelectedId : internalSelectedPersonId;
@@ -61,14 +75,19 @@ function FamilyCanvasInner({
 
   const [internalBranchAdded] = useState(isNewBranchAdded);
   const branchAdded = isNewBranchAdded || internalBranchAdded;
-  const [toastMessage] = useState<string | null>(
-    isNewBranchAdded ? "New branch added 🌿" : null
-  );
+  const [bloomLabel, setBloomLabel] = useState<string | null>(isNewBranchAdded ? "New branch 🌿" : null);
+  const [isGrowing, setIsGrowing] = useState(isNewBranchAdded);
+  const [zoomBand, setZoomBand] = useState<ZoomBand>("medium");
+  const [trailPickerFrom, setTrailPickerFrom] = useState<string | null>(null);
+  const [branchExploreId, setBranchExploreId] = useState<string | null>(null);
+  const [revealedTrailNodes, setRevealedTrailNodes] = useState<string[] | null>(null);
+  const [replayToken, setReplayToken] = useState(0);
+  const [memoryToast, setMemoryToast] = useState<string | null>(null);
 
   const setSelectedPersonId = useCallback(
     (id: string | null) => {
-      if (propOnSelectPerson) propOnSelectPerson(id);
-      else setInternalSelectedPersonId(id);
+      propOnSelectPerson?.(id);
+      setInternalSelectedPersonId(id);
     },
     [propOnSelectPerson]
   );
@@ -78,99 +97,147 @@ function FamilyCanvasInner({
   }, []);
 
   const allMembers = useMemo(() => {
-    return branchAdded
-      ? [...INITIAL_DEMO_MEMBERS, ...DEMO_EXTRACTION_BRANCH]
-      : INITIAL_DEMO_MEMBERS;
+    return branchAdded ? [...INITIAL_DEMO_MEMBERS, ...DEMO_EXTRACTION_BRANCH] : INITIAL_DEMO_MEMBERS;
   }, [branchAdded]);
 
-  const memberMap = useMemo(() => {
-    return new Map(allMembers.map((m) => [m.id, m]));
-  }, [allMembers]);
-
+  const memberMap = useMemo(() => new Map(allMembers.map((m) => [m.id, m])), [allMembers]);
   const selectedMember = selectedPersonId ? memberMap.get(selectedPersonId) || null : null;
 
-  // Set of connected relatives for the selected person
   const directRelativeIds = useMemo(() => {
     if (!selectedMember) return new Set<string>();
     return new Set(selectedMember.directConnections.map((c) => c.id));
   }, [selectedMember]);
 
-  const handleSelectPerson = useCallback((id: string | null) => {
-    setSelectedPersonId(id);
-    if (propOnSelectPerson) propOnSelectPerson(id);
-    if (activeDiscoveryPath) setActiveDiscoveryPath(null);
-  }, [propOnSelectPerson, activeDiscoveryPath, setSelectedPersonId, setActiveDiscoveryPath]);
+  const handleSelectPerson = useCallback(
+    (id: string | null) => {
+      if (trailPickerFrom && id && id !== trailPickerFrom) {
+        const path = findDemoPath(trailPickerFrom, id);
+        setTrailPickerFrom(null);
+        if (path) {
+          setActiveDiscoveryPath(path);
+          setSelectedPersonId(null);
+          return;
+        }
+        setMemoryToast("This demo traces Nora → Arthur, Maya → Arthur, and Nora → Eleanor.");
+        window.setTimeout(() => setMemoryToast(null), 2800);
+      }
+      setSelectedPersonId(id);
+      setBranchExploreId(null);
+      if (activeDiscoveryPath) setActiveDiscoveryPath(null);
+    },
+    [trailPickerFrom, activeDiscoveryPath, setSelectedPersonId, setActiveDiscoveryPath]
+  );
 
-  // Build initial React Flow Nodes
+  useEffect(() => {
+    if (!activeDiscoveryPath) {
+      const clearTimer = window.setTimeout(() => setRevealedTrailNodes(null), 0);
+      return () => window.clearTimeout(clearTimer);
+    }
+    const sequence = activeDiscoveryPath.highlightNodeIds;
+    const timers = sequence.map((nodeId, index) =>
+      window.setTimeout(() => {
+        setRevealedTrailNodes((current) => (index === 0 ? [nodeId] : [...(current ?? []), nodeId]));
+      }, 420 * index)
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [activeDiscoveryPath, replayToken]);
+
+  useEffect(() => {
+    if (!isNewBranchAdded) return;
+    const start = window.setTimeout(() => {
+      setBloomLabel("New branch 🌿");
+      setIsGrowing(true);
+    }, 0);
+    const hide = window.setTimeout(() => setBloomLabel(null), 2400);
+    const grow = window.setTimeout(() => setIsGrowing(false), 900);
+    return () => {
+      window.clearTimeout(start);
+      window.clearTimeout(hide);
+      window.clearTimeout(grow);
+    };
+  }, [isNewBranchAdded]);
+
+  const handleMove = useCallback((_: unknown, viewport: Viewport) => {
+    const next = zoomToBand(viewport.zoom);
+    setZoomBand((current) => (current === next ? current : next));
+  }, []);
+
   const initialNodes: Node[] = useMemo(() => {
     const nodes: Node[] = [];
 
-    // Base Family Members
-    const positions: Record<string, { x: number; y: number }> = {
-      arthur: { x: 120, y: 40 },
-      eleanor: { x: 450, y: 40 },
-      julian: { x: 170, y: 240 },
-      clara: { x: 500, y: 240 },
-      nora: { x: 60, y: 440 },
-      leo: { x: 330, y: 440 },
-      maya: { x: 600, y: 440 },
-      // Extraction branch
-      joseph: { x: -220, y: 40 },
-      mathew: { x: -480, y: 40 },
-      thomas: { x: -740, y: 40 },
-    };
-
     allMembers.forEach((member) => {
-      const pos = positions[member.id] || { x: 0, y: 0 };
+      const pos = POSITIONS[member.id] || { x: 0, y: 0 };
       const isSelected = selectedPersonId === member.id;
       const isDirectRel = directRelativeIds.has(member.id);
-      const isPathHighlight = activeDiscoveryPath?.highlightNodeIds.includes(member.id);
+      const isPathHighlight = Boolean(activeDiscoveryPath?.highlightNodeIds.includes(member.id));
+      const trailReady = !activeDiscoveryPath || Boolean(revealedTrailNodes?.includes(member.id));
 
-      const isDimmed =
-        activeDiscoveryPath
-          ? !isPathHighlight
+      const exploreMember = branchExploreId ? memberMap.get(branchExploreId) : null;
+      const inExploredBranch = exploreMember
+        ? member.branchName === exploreMember.branchName ||
+          member.id === exploreMember.id ||
+          exploreMember.directConnections.some((rel) => rel.id === member.id)
+        : true;
+
+      const isDimmed = activeDiscoveryPath
+        ? !isPathHighlight || !trailReady
+        : branchExploreId
+          ? !inExploredBranch
           : selectedPersonId
-          ? !isSelected && !isDirectRel
-          : false;
+            ? !isSelected && !isDirectRel
+            : false;
 
       nodes.push({
         id: member.id,
         type: "personNode",
+        draggable: false,
         position: pos,
         data: {
           member,
           isSelected,
           isDimmed,
-          isPathHighlighted: isPathHighlight,
+          isPathHighlighted: isPathHighlight && trailReady,
+          isBlooming: isGrowing && ["joseph", "mathew", "thomas"].includes(member.id),
+          zoomBand,
           onSelectPerson: handleSelectPerson,
         } as PersonNodeData,
       });
     });
 
-    // Pinned Memory Artifacts
-    DEMO_MEMORIES.forEach((memory) => {
-      const parentPos = positions[memory.targetPersonId];
-      if (parentPos) {
-        const isDimmed = selectedPersonId && selectedPersonId !== memory.targetPersonId;
-        nodes.push({
-          id: memory.id,
-          type: "memoryNode",
-          position: {
-            x: parentPos.x + memory.xOffset,
-            y: parentPos.y + memory.yOffset,
-          },
-          data: {
-            memory,
-            isDimmed,
-          } as MemoryNodeData,
+    if (selectedPersonId) {
+      DEMO_MEMORIES.filter((memory) => memory.targetPersonId === selectedPersonId)
+        .slice(0, 3)
+        .forEach((memory) => {
+          const parentPos = POSITIONS[memory.targetPersonId];
+          if (!parentPos) return;
+          nodes.push({
+            id: memory.id,
+            type: "memoryNode",
+            draggable: false,
+            selectable: false,
+            position: {
+              x: parentPos.x + memory.xOffset,
+              y: parentPos.y + memory.yOffset,
+            },
+            data: { memory, isDimmed: false } as MemoryNodeData,
+          });
         });
-      }
-    });
+    }
 
     return nodes;
-  }, [allMembers, selectedPersonId, directRelativeIds, activeDiscoveryPath, handleSelectPerson]);
+  }, [
+    allMembers,
+    selectedPersonId,
+    directRelativeIds,
+    activeDiscoveryPath,
+    handleSelectPerson,
+    zoomBand,
+    isGrowing,
+    branchExploreId,
+    memberMap,
+    revealedTrailNodes,
+  ]);
 
-  // Build initial React Flow Edges
   const initialEdges: Edge[] = useMemo(() => {
     const baseEdges: { id: string; source: string; target: string; type: "parent" | "spouse" | "sibling" }[] = [
       { id: "arthur-eleanor", source: "arthur", target: "eleanor", type: "spouse" },
@@ -194,7 +261,14 @@ function FamilyCanvasInner({
     }
 
     return baseEdges.map((edge) => {
-      const isPath = activeDiscoveryPath?.highlightEdgeIds.includes(edge.id);
+      const isPath = Boolean(activeDiscoveryPath?.highlightEdgeIds.includes(edge.id));
+      const trailReady =
+        !activeDiscoveryPath ||
+        Boolean(
+          revealedTrailNodes &&
+            revealedTrailNodes.includes(edge.source) &&
+            revealedTrailNodes.includes(edge.target)
+        );
       const isConnected =
         selectedPersonId && (edge.source === selectedPersonId || edge.target === selectedPersonId);
 
@@ -205,17 +279,17 @@ function FamilyCanvasInner({
         type: "kinshipEdge",
         data: {
           relationshipType: edge.type,
-          isPathHighlighted: isPath,
-          isSelectedConnected: isConnected,
+          isPathHighlighted: isPath && trailReady,
+          isSelectedConnected: Boolean(isConnected),
+          isGrowing: isGrowing && ["joseph-arthur", "mathew-joseph", "thomas-mathew"].includes(edge.id),
         },
       };
     });
-  }, [branchAdded, activeDiscoveryPath, selectedPersonId]);
+  }, [branchAdded, activeDiscoveryPath, selectedPersonId, isGrowing, revealedTrailNodes]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Sync internal nodes/edges when dependencies change
   useEffect(() => {
     setNodes(initialNodes);
   }, [initialNodes, setNodes]);
@@ -224,28 +298,39 @@ function FamilyCanvasInner({
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
 
-  // Initial fit view on mount
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fitView({ padding: 0.25, duration: 400 });
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [fitView]);
+    const timer = window.setTimeout(() => {
+      fitView({ padding: 0.12, duration: 280, minZoom: 0.55, maxZoom: 1.15 });
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [fitView, branchAdded]);
+
+  useEffect(() => {
+    if (!selectedPersonId) return;
+    const node = getNode(selectedPersonId);
+    if (!node) return;
+    const timer = window.setTimeout(() => {
+      setCenter(node.position.x + 84, node.position.y + 110, { zoom: 1.05, duration: 380 });
+    }, 40);
+    return () => window.clearTimeout(timer);
+  }, [selectedPersonId, getNode, setCenter]);
 
   const handleStartDiscovery = (sourceId: string) => {
-    // If Nora, trigger path to grandfather Arthur
-    if (sourceId === "nora") {
-      setActiveDiscoveryPath(DEMO_DISCOVERY_PATHS["nora-arthur"]);
-    } else if (sourceId === "maya") {
-      setActiveDiscoveryPath(DEMO_DISCOVERY_PATHS["maya-arthur"]);
-    } else {
-      setActiveDiscoveryPath(DEMO_DISCOVERY_PATHS["nora-eleanor"]);
-    }
+    setTrailPickerFrom(sourceId);
+    setActiveDiscoveryPath(null);
+  };
+
+  const handleExploreBranch = (sourceId: string) => {
+    setBranchExploreId(sourceId);
+  };
+
+  const handleReplayTrail = () => {
+    setReplayToken((token) => token + 1);
   };
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* React Flow Spatial Canvas */}
+      <div style={{ position: "absolute", inset: "0 0 168px 0" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -253,125 +338,145 @@ function FamilyCanvasInner({
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        onPaneClick={() => handleSelectPerson(null)}
+        onPaneClick={() => {
+          handleSelectPerson(null);
+          setTrailPickerFrom(null);
+          setBranchExploreId(null);
+        }}
+        onMove={handleMove}
+        onInit={(instance) => {
+          instance.fitView({ padding: 0.12, duration: 0 });
+        }}
         fitView
-        minZoom={0.35}
-        maxZoom={1.6}
-        defaultViewport={{ x: 0, y: 0, zoom: 0.95 }}
-      >
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={24}
-          size={1.2}
-          color="rgba(31, 28, 24, 0.08)"
-        />
-      </ReactFlow>
+        fitViewOptions={{ padding: 0.12, minZoom: 0.55, maxZoom: 1.15 }}
+        minZoom={0.42}
+        maxZoom={1.7}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable
+        defaultViewport={{ x: 0, y: 0, zoom: 0.92 }}
+        proOptions={{ hideAttribution: false }}
+      />
+      </div>
 
-      {/* Floating Canvas Controls (Top Right) */}
       <div className="kin-controls-bar">
-        <button
-          onClick={() => zoomIn({ duration: 250 })}
-          className="kin-control-btn"
-          aria-label="Zoom in"
-          title="Zoom in"
-        >
-          <ZoomIn size={16} />
+        <button onClick={() => zoomIn({ duration: 250 })} className="kin-control-btn" aria-label="Zoom in" title="Zoom in">
+          <ZoomIn size={18} />
+        </button>
+        <button onClick={() => zoomOut({ duration: 250 })} className="kin-control-btn" aria-label="Zoom out" title="Zoom out">
+          <ZoomOut size={18} />
         </button>
         <button
-          onClick={() => zoomOut({ duration: 250 })}
+          onClick={() => fitView({ padding: 0.16, duration: 350 })}
           className="kin-control-btn"
-          aria-label="Zoom out"
-          title="Zoom out"
-        >
-          <ZoomOut size={16} />
-        </button>
-        <button
-          onClick={() => fitView({ padding: 0.2, duration: 350 })}
-          className="kin-control-btn"
-          aria-label="Fit tree to view"
+          aria-label="Fit family to view"
           title="Fit view"
         >
-          <Maximize2 size={15} />
+          <Maximize2 size={17} />
         </button>
       </div>
 
-      {/* Toast Notification (e.g. New branch added 🌿) */}
-      {toastMessage && (
-        <div
-          style={{
-            position: "absolute",
-            top: "20px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            backgroundColor: "var(--bg-surface-elevated)",
-            border: "1.5px solid var(--branch-sage)",
-            color: "var(--branch-sage)",
-            padding: "8px 16px",
-            borderRadius: "var(--radius-full)",
-            boxShadow: "var(--shadow-md)",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            zIndex: 40,
-            animation: "fadeIn 200ms ease",
-          }}
-        >
-          <span>{toastMessage}</span>
+      {bloomLabel && <div className="kin-bloom-label">{bloomLabel}</div>}
+
+      {memoryToast && (
+        <div className="kin-bloom-label" style={{ top: 64, background: "var(--cream-hot)" }}>
+          {memoryToast}
         </div>
       )}
 
-      {/* Desktop Floating Scrapbook Inspector (Docked at Right) */}
-      {selectedMember && !activeDiscoveryPath && (
+      {trailPickerFrom && (
+        <div
+          className="kin-stamp"
+          style={{
+            position: "absolute",
+            top: 18,
+            left: 16,
+            zIndex: 30,
+            background: "var(--cream-hot)",
+            border: "var(--outline-heavy) solid var(--ink)",
+            boxShadow: "var(--shadow-rest)",
+            padding: "10px 14px",
+            maxWidth: 280,
+            fontSize: "0.72rem",
+          }}
+        >
+          Choose a second person to see the connection.
+        </div>
+      )}
+
+      {selectedMember && !activeDiscoveryPath && !trailPickerFrom && (
         <div
           className="kin-desktop-inspector"
           style={{
             position: "absolute",
-            top: "20px",
-            right: "20px",
+            bottom: 176,
+            right: 16,
             zIndex: 30,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            maxWidth: 280,
           }}
         >
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <button type="button" className="kin-press-ghost" style={{ padding: "10px 12px", minHeight: 44 }} onClick={() => handleExploreBranch(selectedMember.id)}>
+              Explore branch
+            </button>
+            <button type="button" className="kin-press" style={{ padding: "10px 12px", minHeight: 44 }} onClick={() => handleStartDiscovery(selectedMember.id)}>
+              Find connection
+            </button>
+            <button
+              type="button"
+              className="kin-press-ghost"
+              style={{ padding: "10px 12px", minHeight: 44 }}
+              onClick={() => {
+                setMemoryToast(`A memory slot opened beside ${selectedMember.name.split(" ")[0]}.`);
+                window.setTimeout(() => setMemoryToast(null), 2200);
+              }}
+            >
+              Add memory
+            </button>
+          </div>
           <PersonFocusDrawer
             member={selectedMember}
             onClose={() => handleSelectPerson(null)}
             onSelectRelative={handleSelectPerson}
             onStartDiscovery={handleStartDiscovery}
+            onExploreBranch={handleExploreBranch}
           />
         </div>
       )}
 
-      {/* Mobile Bottom-Sheet Inspector */}
-      {selectedMember && !activeDiscoveryPath && (
+      {selectedMember && !activeDiscoveryPath && !trailPickerFrom && (
         <div
           className="kin-mobile-sheet"
           style={{
             position: "absolute",
-            bottom: "85px",
-            left: "12px",
-            right: "12px",
+            bottom: 176,
+            left: 10,
+            right: 10,
             zIndex: 30,
-            maxHeight: "65vh",
+            maxHeight: "58vh",
             overflowY: "auto",
           }}
         >
           <PersonFocusDrawer
             member={selectedMember}
+            compact
             onClose={() => handleSelectPerson(null)}
             onSelectRelative={handleSelectPerson}
             onStartDiscovery={handleStartDiscovery}
+            onExploreBranch={handleExploreBranch}
           />
         </div>
       )}
 
-      {/* Relationship Path Discovery Card */}
       {activeDiscoveryPath && (
         <div
           style={{
             position: "absolute",
-            top: "20px",
-            right: "20px",
+            top: 16,
+            right: 16,
             zIndex: 35,
           }}
         >
@@ -379,6 +484,7 @@ function FamilyCanvasInner({
             path={activeDiscoveryPath}
             onClose={() => setActiveDiscoveryPath(null)}
             onStepClick={handleSelectPerson}
+            onSeeWhy={handleReplayTrail}
           />
         </div>
       )}

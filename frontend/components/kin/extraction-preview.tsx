@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ExtractionCandidate } from "@/data/demo-stories";
-import { Check, Edit3, X, Sparkles } from "lucide-react";
+import { PersonPortrait } from "@/components/family/person-portrait";
 
 interface ExtractionPreviewProps {
   candidate: ExtractionCandidate;
@@ -10,146 +10,86 @@ interface ExtractionPreviewProps {
   onDismiss: () => void;
 }
 
-export function ExtractionPreview({
-  candidate,
-  onAccept,
-  onDismiss,
-}: ExtractionPreviewProps) {
+function portraitFor(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes("joseph") || lower.includes("thomas") || lower.includes("mathew")) return "silhouette-uncle" as const;
+  if (lower.includes("clara")) return "silhouette-mother" as const;
+  if (lower.includes("julian")) return "silhouette-father" as const;
+  if (lower.includes("george")) return "silhouette-uncle" as const;
+  return "silhouette-brother" as const;
+}
+
+export function ExtractionPreview({ candidate, onAccept, onDismiss }: ExtractionPreviewProps) {
+  const people = [{ name: candidate.primaryName, relation: candidate.primaryRole }, ...candidate.relatives];
+
   return (
     <div
       style={{
-        position: "relative",
         width: "100%",
-        maxWidth: "480px",
+        maxWidth: "520px",
         margin: "0 auto",
-        backgroundColor: "var(--bg-surface-elevated)",
-        border: "2px solid var(--accent-warm)",
-        borderRadius: "var(--radius-lg)",
-        boxShadow: "var(--shadow-selected)",
-        padding: "16px 18px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-        animation: "fadeIn 200ms ease",
-        zIndex: 35,
+        background: "var(--cream-hot)",
+        border: "var(--outline-heavy) solid var(--ink)",
+        boxShadow: "var(--shadow-raised)",
+        padding: "16px",
+        transform: "rotate(-0.3deg)",
       }}
     >
-      <div className="tape-strip" style={{ width: "42px", height: "14px", top: "-7px" }} />
+      <div className="tape-strip" />
+      <p className="kin-stamp" style={{ fontSize: "0.92rem" }}>
+        KIN understood
+      </p>
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Sparkles size={16} color="var(--accent-warm)" />
-          <span
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", marginTop: 12, paddingBottom: 4 }}>
+        {people.map((person) => (
+          <div
+            key={person.name}
             style={{
-              fontFamily: "var(--font-serif)",
-              fontWeight: 700,
-              fontSize: "1.05rem",
-              color: "var(--text-primary)",
+              minWidth: 116,
+              border: "var(--outline-medium) solid var(--ink)",
+              boxShadow: "var(--shadow-rest)",
+              background: "var(--cream)",
             }}
           >
-            KIN understood:
-          </span>
-        </div>
-
-        <button
-          onClick={onDismiss}
-          aria-label="Dismiss extraction"
-          style={{
-            width: "26px",
-            height: "26px",
-            borderRadius: "var(--radius-full)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "var(--text-muted)",
-            backgroundColor: "var(--bg-surface-hover)",
-          }}
-        >
-          <X size={14} />
-        </button>
+            <PersonPortrait type={portraitFor(person.name)} color="var(--branch-terracotta)" size={116} />
+            <div style={{ padding: "6px 8px 8px" }}>
+              <div style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "0.78rem" }}>{person.name}</div>
+              <div className="kin-stamp" style={{ fontSize: "0.55rem", marginTop: 2, color: "var(--accent-warm)" }}>
+                {person.relation}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Extracted Tree Diagram */}
-      <div
+      <pre
         style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.86rem",
-          lineHeight: 1.4,
-          backgroundColor: "var(--bg-canvas-subtle)",
-          border: "1px solid var(--border-default)",
-          borderRadius: "var(--radius-sm)",
-          padding: "10px 14px",
-          color: "var(--text-primary)",
+          fontFamily: "var(--font-sans)",
+          fontSize: "0.82rem",
+          fontWeight: 700,
+          lineHeight: 1.45,
+          marginTop: 12,
+          whiteSpace: "pre-wrap",
         }}
       >
-        <div style={{ fontWeight: 700, color: "var(--accent-warm)" }}>
-          {candidate.primaryName} ({candidate.primaryRole})
-        </div>
+        {candidate.primaryName}
+        {"\n"}
         {candidate.relatives.map((rel, idx) => {
-          const isLast = idx === candidate.relatives.length - 1;
-          const branchPrefix = isLast ? "└── " : "├── ";
-          return (
-            <div key={idx} style={{ color: "var(--text-secondary)" }}>
-              {branchPrefix}
-              <strong>{rel.name}</strong> — {rel.relation}
-            </div>
-          );
-        })}
-      </div>
+          const prefix = idx === candidate.relatives.length - 1 ? "└── " : "├── ";
+          return `${prefix}${rel.name} · ${rel.relation.toLowerCase()}`;
+        }).join("\n")}
+      </pre>
 
-      {/* Metadata Pill */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-        <span>
-          <strong>{candidate.peopleCount} people</strong> · <strong>{candidate.connectionCount} relationships</strong>
-        </span>
-        <span style={{ fontStyle: "italic" }}>Deterministic Python reasoning on backend</span>
-      </div>
+      <p className="kin-stamp" style={{ marginTop: 8, fontSize: "0.68rem", color: "var(--text-muted)" }}>
+        {candidate.peopleCount} people · {candidate.connectionCount} connections
+      </p>
 
-      {/* Actions */}
-      <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
-        <button
-          onClick={onAccept}
-          style={{
-            flex: 1,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            backgroundColor: "var(--accent-warm)",
-            color: "var(--text-inverted)",
-            padding: "8px 14px",
-            borderRadius: "var(--radius-md)",
-            fontSize: "0.86rem",
-            fontWeight: 600,
-            boxShadow: "var(--shadow-sm)",
-            transition: "all var(--duration-fast)",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-warm-hover)")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--accent-warm)")}
-        >
-          <Check size={16} />
-          <span>Looks right (Add branch 🌿)</span>
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <button type="button" onClick={onDismiss} className="kin-press-ghost" style={{ padding: "10px 12px", minHeight: 44, flex: 1 }}>
+          Fix something
         </button>
-
-        <button
-          onClick={() => alert("[Demo Action] In KIN milestone 5, you can correct names, change cousin levels, or split homonyms.")}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "5px",
-            backgroundColor: "var(--bg-surface-hover)",
-            color: "var(--text-secondary)",
-            border: "1px solid var(--border-default)",
-            padding: "8px 14px",
-            borderRadius: "var(--radius-md)",
-            fontSize: "0.84rem",
-            fontWeight: 500,
-          }}
-        >
-          <Edit3 size={14} />
-          <span>Fix something</span>
+        <button type="button" onClick={onAccept} className="kin-press" style={{ padding: "10px 12px", minHeight: 44, flex: 1 }}>
+          Looks right →
         </button>
       </div>
     </div>

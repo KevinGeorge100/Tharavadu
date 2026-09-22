@@ -61,4 +61,20 @@ export const DEMO_PROMPT_STORIES: DemoPromptStory[] = [
       explanation: "Identified biographical memory for watchmaker Uncle Thomas.",
     },
   },
+  {
+    id: "two-georges",
+    label: "George at the reunion",
+    storyText: "George told the old lighthouse story at the reunion.",
+    candidate: {
+      primaryName: "George",
+      primaryRole: "Needs a closer look",
+      relatives: [
+        { name: "George Davis", relation: "Dad's cousin" },
+        { name: "George Miller", relation: "Grandpa's brother" },
+      ],
+      peopleCount: 2,
+      connectionCount: 0,
+      explanation: "KIN found more than one George.",
+    },
+  },
 ];
