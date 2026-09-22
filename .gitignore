@@ -15,3 +15,5 @@ test-results/
 *.log
 *.tsbuildinfo
 artifacts/
+frontend/AGENTS.md
+frontend/CLAUDE.md

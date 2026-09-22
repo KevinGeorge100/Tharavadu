@@ -68,18 +68,20 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 
 ---
 
-### KIN-004: Frontend Application Foundation & Scaffolding
-- **Priority:** P0
+### KIN-004: Frontend Foundation & Family Exploration Canvas
+- **Priority:** P1
 - **Status:** REVIEW
-- **Goal:** Create the Next.js App Router scaffolding in `frontend/` so that `npm run build`, `npm run lint`, and `npm run typecheck` pass.
-- **Reason:** `frontend/` currently contains only configuration files and dependencies; `next build` fails immediately due to a missing `app/` or `pages/` directory.
+- **Goal:** Redesign KIN frontend as a warm, spatial family exploration canvas ("Warm Scrapbook + Family Constellation + Spatial Playground") with light-first ivory/parchment palette, conversational AI composer, and interactive constellation explorer.
+- **Reason:** Previous SaaS landing page UI failed UX review. The family universe is the home screen; users experience KIN directly without marketing cards or conventional headers/footers.
 - **Dependencies:** None.
 - **Acceptance Criteria:**
-  1. Create `frontend/app/layout.tsx`, `frontend/app/page.tsx`, and `frontend/app/globals.css`.
-  2. Set up cohesive, modern design system tokens (clean dark mode, typography, CSS variables).
-  3. Create an initial landing/shell view displaying application status and connectivity test to `/api/health`.
-  4. `npm run build` succeeds cleanly producing a standalone production bundle.
-  5. `npm run typecheck` and `npm run lint` pass with 0 errors.
+  1. Light-first warm palette (parchment/ivory `#fbf8f2`, deep ink typography `#1e1c19`, soft pastel family branch tones).
+  2. Spatial first-run canvas ("Start with you" central node with satellite actions: Add a parent, Add a sibling, Add a partner, Tell KIN a story).
+  3. Interactive 3-generation demo family constellation (Arthur, Eleanor, Julian, Clara, Nora, Leo, Maya) with SVG connectors and kinship path tracing.
+  4. Floating conversational AI composer at the bottom with prompt chips and clearly labeled local simulation feedback pill.
+  5. Warm scrapbook person card with fictional memories, direct jump relative navigation, and relationship path highlighting.
+  6. Responsive mobile layout with bottom-sheet card, minimal top chrome, and zero horizontal overflow.
+  7. `npm run typecheck`, `npm run lint`, and `npm run build` pass cleanly.
 
 ---
 

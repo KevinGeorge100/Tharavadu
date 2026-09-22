@@ -12,7 +12,7 @@ KIN is an AI-assisted personal genealogy and kinship reasoning system designed t
 
 The repository currently exhibits a significant asymmetry:
 - **Backend (`backend/app/`):** Contains a tightly scoped, functioning prototype implementation of deterministic kinship reasoning (`domain.py`, `queries.py`), schema validation (`schemas.py`), dual AI extraction providers (`ai.py` supporting offline regex and OpenAI structured outputs), dual graph backends (`database.py` supporting SQLite snapshot and Neo4j atomic graph replacement), and session-based FastAPI endpoints (`main.py`).
-- **Frontend (`frontend/`):** Next.js App Router foundation and responsive shell established (`app/layout.tsx`, `app/page.tsx`, `app/globals.css`, `components/constellation-preview.tsx`). `next build`, `npm run lint`, and `npm run typecheck` all pass with 0 errors.
+- **Frontend (`frontend/`):** Next.js App Router spatial canvas established (`app/layout.tsx`, `app/page.tsx`, `app/globals.css`, `components/family-canvas.tsx`, `components/person-node.tsx`, `components/person-card.tsx`, `components/kin-composer.tsx`, `data/demo-family.ts`). Light-first warm scrapbook palette, conversational AI composer, and 3-generation constellation explorer. `next build`, `npm run lint`, and `npm run typecheck` all pass with 0 errors.
 - **Testing & Quality Assurance:** Deterministic domain unit test suite established (88 tests in `backend/tests/`, 100% passing). API integration tests and Playwright E2E tests are scheduled for subsequent milestones.
 - **Git State:** Newly initialized Git repository with active development branches off `main`.
 
@@ -22,11 +22,11 @@ The repository currently exhibits a significant asymmetry:
 
 | Dimension | Assessment | Evidence |
 | :--- | :--- | :--- |
-| **Overall Maturity** | **FUNCTIONAL PROTOTYPE (Backend) / PROTOTYPE SHELL (Frontend)** | Backend logic handles API lifecycles with 88 passing unit tests; frontend App Router shell builds cleanly and renders responsive constellation demo. |
+| **Overall Maturity** | **FUNCTIONAL PROTOTYPE (Backend) / PROTOTYPE SPATIAL CANVAS (Frontend)** | Backend logic handles API lifecycles with 88 passing unit tests; frontend App Router spatial canvas builds cleanly and renders responsive constellation demo. |
 | **Domain Logic** | **FUNCTIONAL PROTOTYPE** | Kinship classification, ancestry cycle detection, and identity resolution algorithms are fully codified in Python and covered by 88 unit tests. |
 | **AI Integration** | **PARTIALLY IMPLEMENTED / PROPOSAL-ONLY** | Dual extraction paths exist (offline regex and OpenAI structured outputs). Both produce `Extraction` proposals; direct write access to the graph is prohibited by design. |
 | **Persistence** | **FUNCTIONAL PROTOTYPE (Local) / UNVERIFIED (Neo4j/Postgres)** | SQLite schema initialization and local snapshot storage work; Neo4j repository code exists but lacks integration test coverage. |
-| **Frontend UI** | **FUNCTIONAL SHELL** | App Router scaffolding, dark-first constellation design tokens, interactive fictional preview, and responsive shell implemented. Production React Flow canvas scheduled for KIN-007. |
+| **Frontend UI** | **FUNCTIONAL SPATIAL CANVAS** | Spatial App Router canvas with light-first warm scrapbook design tokens, first-run "Start with you" prompt, interactive fictional constellation demo, and floating AI composer. Full React Flow canvas scheduled for KIN-006. |
 | **Automated Testing** | **FUNCTIONAL PROTOTYPE (Backend Domain)** | 88 pytest unit tests pass covering validation, cycle detection, kinship classification, queries, and schemas. E2E tests unconfigured. |
 
 ---
@@ -50,7 +50,7 @@ The following matrix distinguishes between code existence, automated testing, in
 | **Demo Family Seed Generation** | IMPLEMENTED (Unverified) | `backend/app/seed.py` | Code Exists | Generates 8-person fictional family (George, Anna, Joseph, Leena, etc.). |
 | **Local Graph Snapshot Storage** | IMPLEMENTED (Unverified) | `backend/app/database.py` | Code Exists | Stores serialized JSON graph snapshot in `local_graphs` SQL table with optimistic revision check. |
 | **Neo4j Graph Repository** | IMPLEMENTED (Unverified) | `backend/app/database.py` | Code Exists | Full atomic graph replacement using Neo4j write transaction and family root locking. Untested against live Neo4j. |
-| **Frontend Web Workspace & UI** | IMPLEMENTED (Shell & Demo) | `frontend/app/`<br>`frontend/components/` | Code Exists & Builds | Responsive App Router shell, warm design tokens, first-run story prompt, and interactive constellation demo. `next build` passes. |
+| **Frontend Web Workspace & UI** | IMPLEMENTED (Spatial Canvas & Demo) | `frontend/app/`<br>`frontend/components/`<br>`frontend/data/` | Code Exists & Builds | Spatial App Router canvas, warm light-first tokens, first-run "Start with you" canvas, floating conversational AI composer, and 3-generation interactive constellation demo. `next build` passes. |
 | **Frontend Interactive Graph Visualization** | PLANNED | `frontend/package.json` | Dependencies Only | `@xyflow/react` and `@dagrejs/dagre` installed; full interactive canvas scheduled for KIN-007. |
 | **Automated End-to-End Tests** | NOT CONFIGURED | `frontend/` | Missing | Playwright installed in `package.json`; no test suites written. |
 
