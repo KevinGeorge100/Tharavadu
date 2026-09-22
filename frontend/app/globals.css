@@ -1,116 +1,125 @@
 /* =============================================================================
-   KIN — Warm Scrapbook & Family Constellation Design System (Light-First)
+   KIN — Warm Scrapbook, Art Nouveau & Mid-Century Family Design System
    ============================================================================= */
+
+@import "@xyflow/react/dist/style.css";
 
 :root {
   /* Canvas & Parchment Surfaces */
-  --bg-canvas: #fbf8f2;
-  --bg-canvas-subtle: #f4efe6;
+  --bg-canvas: #fcf8f1;
+  --bg-canvas-subtle: #f5eedf;
   --bg-surface: #ffffff;
-  --bg-surface-warm: #fcf9f5;
+  --bg-surface-warm: #fcf9f4;
   --bg-surface-elevated: #ffffff;
-  --bg-surface-hover: #f7f3ec;
-  --bg-surface-active: #eee8dc;
+  --bg-surface-card: #fffdf9;
+  --bg-surface-hover: #f7f1e6;
+  --bg-surface-active: #ebe2d3;
+  --bg-archival-note: #fefcf4;
 
   /* Ink Typography */
-  --text-primary: #1e1c19;
-  --text-secondary: #5e5950;
-  --text-muted: #8c867a;
+  --text-primary: #1f1c18;
+  --text-secondary: #484138;
+  --text-muted: #787065;
+  --text-faint: #a69e94;
   --text-inverted: #ffffff;
 
-  /* Primary Warm Accent: Apricot / Amber */
-  --accent-warm: #d97736;
-  --accent-warm-hover: #c46424;
-  --accent-warm-soft: #fbeee4;
-  --accent-warm-border: #f0caa8;
-  --accent-warm-ring: rgba(217, 119, 54, 0.28);
+  /* Primary Warm Accent: Burnt Orange / Terracotta */
+  --accent-warm: #d46022;
+  --accent-warm-hover: #b84e15;
+  --accent-warm-soft: #fdeee6;
+  --accent-warm-border: #f2caa7;
+  --accent-warm-ring: rgba(212, 96, 34, 0.28);
 
-  /* Joyful Muted Family Branch Palette */
-  --branch-sage: #4f7d56;
-  --branch-sage-soft: #eaf3ec;
-  --branch-sage-border: #bcd6c0;
+  /* Mid-Century Family Branch Palette */
+  --branch-terracotta: #c85a32;
+  --branch-terracotta-soft: #fcefe9;
+  --branch-terracotta-border: #e8bbae;
 
-  --branch-blue: #3d6f99;
-  --branch-blue-soft: #e6f0f8;
-  --branch-blue-border: #b3d1ea;
+  --branch-sage: #3d6b4f;
+  --branch-sage-soft: #eaf3ed;
+  --branch-sage-border: #b5d5c0;
 
-  --branch-rose: #b84f60;
-  --branch-rose-soft: #fbecee;
-  --branch-rose-border: #f0c0c8;
+  --branch-blue: #2c5d88;
+  --branch-blue-soft: #e7f0f7;
+  --branch-blue-border: #acc9e2;
 
-  --branch-yellow: #a87919;
-  --branch-yellow-soft: #fbf4de;
-  --branch-yellow-border: #ebd99f;
+  --branch-mustard: #b27b18;
+  --branch-mustard-soft: #faf4e4;
+  --branch-mustard-border: #e6d39a;
 
-  --branch-peach: #c96232;
-  --branch-peach-soft: #faeee7;
-  --branch-peach-border: #f3c7b0;
+  --branch-rose: #a84858;
+  --branch-rose-soft: #fbebee;
+  --branch-rose-border: #e4b4bd;
 
-  --branch-violet: #6e528f;
+  --branch-violet: #583b70;
   --branch-violet-soft: #f1ecf7;
-  --branch-violet-border: #cfc0e2;
+  --branch-violet-border: #cabbe0;
 
-  /* Lines, Paper Edges & Dividers */
-  --border-subtle: rgba(30, 28, 25, 0.08);
-  --border-default: rgba(30, 28, 25, 0.13);
-  --border-hover: rgba(30, 28, 25, 0.24);
-  --border-strong: rgba(30, 28, 25, 0.35);
+  /* Borders & Rules */
+  --border-subtle: rgba(31, 28, 24, 0.08);
+  --border-default: rgba(31, 28, 24, 0.16);
+  --border-strong: rgba(31, 28, 24, 0.32);
+  --border-warm: #decbb3;
 
-  /* Scrapbook Tactile Shadows */
-  --shadow-sm: 0 1px 3px rgba(30, 28, 25, 0.05), 0 1px 2px rgba(30, 28, 25, 0.03);
-  --shadow-md: 0 4px 16px rgba(30, 28, 25, 0.07), 0 1px 3px rgba(30, 28, 25, 0.04);
-  --shadow-lg: 0 12px 32px rgba(30, 28, 25, 0.10), 0 2px 6px rgba(30, 28, 25, 0.05);
-  --shadow-floating: 0 18px 42px -6px rgba(30, 28, 25, 0.14), 0 4px 12px rgba(30, 28, 25, 0.06);
+  /* Shadows (Paper & Scrapbook Depth) */
+  --shadow-sm: 0 1px 3px rgba(31, 28, 24, 0.06), 0 1px 2px rgba(31, 28, 24, 0.04);
+  --shadow-md: 0 4px 10px rgba(31, 28, 24, 0.08), 0 2px 4px rgba(31, 28, 24, 0.05);
+  --shadow-lg: 0 10px 24px rgba(31, 28, 24, 0.11), 0 3px 8px rgba(31, 28, 24, 0.06);
+  --shadow-card: 0 3px 12px rgba(45, 35, 25, 0.09), 0 1px 3px rgba(45, 35, 25, 0.05);
+  --shadow-selected: 0 0 0 3px var(--accent-warm-ring), 0 12px 28px rgba(212, 96, 34, 0.18), 0 3px 8px rgba(31, 28, 24, 0.08);
 
-  /* Radii */
+  /* Border Radii */
   --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
   --radius-full: 9999px;
 
-  /* Transitions */
+  /* Typography Stacks */
+  --font-serif: "Playfair Display", "Baskerville", "Georgia", "Cambria", "Times New Roman", serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Motion Curves */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
   --ease-natural: cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-fast: 160ms;
-  --duration-normal: 260ms;
 }
 
-/* Base Reset */
+/* =============================================================================
+   Base & Reset
+   ============================================================================= */
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-sans);
   background-color: var(--bg-canvas);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overflow: hidden;
 }
 
-body {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--bg-canvas);
-  color: var(--text-primary);
-  overflow-x: hidden;
-}
-
-/* Subtle Organic Canvas Texture (Pure CSS dotted constellation grid) */
-.spatial-canvas-bg {
+/* Scrapbook Paper Texture Background (Pure CSS radial dots & faint warm fiber) */
+.kin-canvas-bg {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: radial-gradient(rgba(30, 28, 25, 0.08) 1px, transparent 1px);
-  background-size: 28px 28px;
-  opacity: 0.7;
+  background-image: 
+    radial-gradient(rgba(31, 28, 24, 0.07) 1.2px, transparent 1.2px),
+    linear-gradient(to right, rgba(212, 96, 34, 0.015) 1px, transparent 1px);
+  background-size: 24px 24px, 120px 120px;
+  opacity: 0.85;
   z-index: 0;
 }
 
@@ -120,7 +129,6 @@ body {
   outline-offset: 3px;
 }
 
-/* Interactive Element Resets */
 button {
   font-family: inherit;
   font-size: inherit;
@@ -135,35 +143,124 @@ a {
   text-decoration: none;
 }
 
-/* Responsive Person Details Surface */
-.person-details-container {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  z-index: 25;
-  width: 380px;
-  max-width: calc(100vw - 32px);
+/* =============================================================================
+   Scrapbook Motifs & Artifact Styling
+   ============================================================================= */
+
+/* Photo Corner Accents */
+.photo-card-frame {
+  position: relative;
+  background: #fdfaf4;
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--duration-normal) var(--ease-natural), box-shadow var(--duration-normal) var(--ease-natural);
 }
 
-@media (max-width: 768px) {
-  .person-details-container {
-    bottom: 84px;
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-  }
-  
-  .spatial-top-bar {
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-  
-  .spatial-badge-hide-mobile {
-    display: none !important;
-  }
+/* Wabi-Sabi Tape Accent */
+.tape-strip {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.5deg);
+  width: 50px;
+  height: 16px;
+  background-color: rgba(235, 222, 195, 0.85);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  border-left: 1px dashed rgba(180, 160, 130, 0.4);
+  border-right: 1px dashed rgba(180, 160, 130, 0.4);
+  pointer-events: none;
+  z-index: 5;
+}
 
-  .spatial-footer-secondary {
+/* Scrapbook Archival Tag */
+.archival-tag {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+/* Memory Pin Motif */
+.memory-pin {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: #c85a32;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  display: inline-block;
+}
+
+/* =============================================================================
+   React Flow Custom Theming (Warm Scrapbook Overrides)
+   ============================================================================= */
+
+.react-flow__pane {
+  cursor: grab;
+}
+
+.react-flow__pane:active {
+  cursor: grabbing;
+}
+
+/* Remove default selection box / attribution border clutter */
+.react-flow__attribution {
+  background: rgba(252, 248, 241, 0.7) !important;
+  padding: 2px 6px !important;
+  font-size: 9px !important;
+  color: var(--text-faint) !important;
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+.react-flow__attribution a {
+  color: var(--text-muted) !important;
+}
+
+/* Custom Minimal Floating Controls */
+.kin-controls-bar {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  padding: 4px;
+  gap: 4px;
+  box-shadow: var(--shadow-sm);
+  z-index: 20;
+}
+
+.kin-control-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all var(--duration-fast);
+}
+
+.kin-control-btn:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+/* =============================================================================
+   Responsive & Accessibility Overrides
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .kin-desktop-inspector {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .kin-mobile-sheet {
     display: none;
   }
 }

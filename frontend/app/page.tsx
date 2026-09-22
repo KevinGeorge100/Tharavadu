@@ -3,65 +3,135 @@
 import React, { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
-import { FamilyCanvas } from "@/components/family-canvas";
-import { KinComposer } from "@/components/kin-composer";
+import { FamilyCanvas } from "@/components/family/family-canvas";
+import { AlbumStarter } from "@/components/onboarding/album-starter";
+import { KinComposer } from "@/components/kin/kin-composer";
+import { ExtractionPreview } from "@/components/kin/extraction-preview";
+import { DEMO_PROMPT_STORIES, DemoPromptStory, ExtractionCandidate } from "@/data/demo-stories";
 import { User, Users } from "lucide-react";
 
-function FamilyExperience() {
+function KinAppContent() {
   const searchParams = useSearchParams();
-  const initialMode = searchParams.get("mode") === "start" ? "start" : "demo";
-  const initialSelected = searchParams.get("selected");
-  const initialStory = searchParams.get("story");
 
-  const [mode, setMode] = useState<"demo" | "start">(initialMode);
-  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(initialSelected);
+  // Query parameter state mapping
+  const urlMode = searchParams.get("mode");
+  const urlStep = searchParams.get("step");
+  const urlSelected = searchParams.get("selected");
+  const urlDiscovery = searchParams.get("discovery");
+  const urlExtract = searchParams.get("extract");
+  const urlBranchAdded = searchParams.get("branchAdded") === "true";
+
+  const [mode, setMode] = useState<"demo" | "first-run">(
+    urlMode === "first-run" ? "first-run" : "demo"
+  );
+  const [starterStep, setStarterStep] = useState<"empty" | "anchor">(
+    urlStep === "anchor" ? "anchor" : "empty"
+  );
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(urlSelected || null);
+  const [discoveryKey, setDiscoveryKey] = useState<string | null>(urlDiscovery || null);
+  const [branchAdded, setBranchAdded] = useState(urlBranchAdded);
+
+  // Active AI extraction simulation candidate
+  const initialCandidate: ExtractionCandidate | null =
+    urlExtract === "joseph" ? DEMO_PROMPT_STORIES[0].candidate : null;
+  const [activeExtraction, setActiveExtraction] = useState<ExtractionCandidate | null>(initialCandidate);
+
+  // Story submission handler
+  const handleStorySubmitted = (storyText: string) => {
+    // Check if matching preset story or generic family story
+    const matched = DEMO_PROMPT_STORIES.find((item) =>
+      storyText.toLowerCase().includes("joseph") ||
+      storyText.toLowerCase().includes("brother") ||
+      item.storyText.toLowerCase() === storyText.toLowerCase()
+    );
+
+    if (matched) {
+      setActiveExtraction(matched.candidate);
+    } else {
+      setActiveExtraction({
+        primaryName: "New Family Memory",
+        primaryRole: "Spoken Story",
+        relatives: [
+          { name: "Family Archive", relation: "Oral History" },
+        ],
+        peopleCount: 1,
+        connectionCount: 1,
+        explanation: `KIN extracted candidate relationships from: "${storyText.slice(0, 40)}..."`,
+      });
+    }
+  };
+
+  const handlePromptStorySelect = (promptStory: DemoPromptStory) => {
+    setActiveExtraction(promptStory.candidate);
+  };
+
+  const handleAcceptExtraction = () => {
+    setBranchAdded(true);
+    setActiveExtraction(null);
+  };
 
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
+        width: "100vw",
+        height: "100vh",
         maxHeight: "100vh",
         overflow: "hidden",
         position: "relative",
-        padding: "0.75rem 1rem",
-        gap: "0.65rem",
+        backgroundColor: "var(--bg-canvas)",
       }}
     >
+      {/* Texture Background */}
+      <div className="kin-canvas-bg" />
+
       {/* Minimal Top Bar Chrome */}
       <header
-        className="spatial-top-bar"
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "0.25rem 0.5rem",
+          padding: "10px 18px",
           zIndex: 30,
           flexShrink: 0,
+          borderBottom: "1px solid var(--border-subtle)",
+          backgroundColor: "rgba(252, 248, 241, 0.85)",
+          backdropFilter: "blur(8px)",
         }}
       >
         {/* Brand & Wordmark */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.65rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <BrandMark size={28} />
-          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
-            <span
-              style={{
-                fontSize: "1.15rem",
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                color: "var(--text-primary)",
-              }}
-            >
-              KIN
-            </span>
-            <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 500 }}>
-              family stories, connected
-            </span>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "1.25rem",
+                  fontWeight: 700,
+                  letterSpacing: "-0.01em",
+                  color: "var(--text-primary)",
+                  lineHeight: 1.1,
+                }}
+              >
+                KIN
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontStyle: "italic",
+                  fontSize: "0.82rem",
+                  color: "var(--text-muted)",
+                }}
+              >
+                · {mode === "demo" ? "The Davis Family Constellation" : "Personal Album Starter"}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Center Mode Switcher Affordance */}
+        {/* Mode Switcher Affordance */}
         <div
           style={{
             display: "inline-flex",
@@ -73,16 +143,20 @@ function FamilyExperience() {
             boxShadow: "var(--shadow-sm)",
           }}
           role="tablist"
-          aria-label="Family exploration modes"
+          aria-label="Family canvas view modes"
         >
           <button
-            onClick={() => setMode("demo")}
+            onClick={() => {
+              setMode("demo");
+              setSelectedPersonId(null);
+              setDiscoveryKey(null);
+            }}
             role="tab"
             aria-selected={mode === "demo"}
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.4rem",
+              gap: "5px",
               padding: "5px 14px",
               borderRadius: "var(--radius-full)",
               fontSize: "0.82rem",
@@ -93,104 +167,126 @@ function FamilyExperience() {
             }}
           >
             <Users size={14} />
-            <span>Demo Constellation</span>
+            <span>Family Canvas</span>
           </button>
 
           <button
-            onClick={() => setMode("start")}
+            onClick={() => {
+              setMode("first-run");
+              setStarterStep("empty");
+            }}
             role="tab"
-            aria-selected={mode === "start"}
+            aria-selected={mode === "first-run"}
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.4rem",
+              gap: "5px",
               padding: "5px 14px",
               borderRadius: "var(--radius-full)",
               fontSize: "0.82rem",
               fontWeight: 600,
-              color: mode === "start" ? "var(--text-inverted)" : "var(--text-secondary)",
-              backgroundColor: mode === "start" ? "var(--accent-warm)" : "transparent",
+              color: mode === "first-run" ? "var(--text-inverted)" : "var(--text-secondary)",
+              backgroundColor: mode === "first-run" ? "var(--accent-warm)" : "transparent",
               transition: "all var(--duration-fast)",
             }}
           >
             <User size={14} />
-            <span>Start With You</span>
+            <span>Start Fresh</span>
           </button>
-        </div>
-
-        {/* Subtle Open Source & About Affordance */}
-        <div className="spatial-badge-hide-mobile" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span
-            style={{
-              fontSize: "0.75rem",
-              color: "var(--text-muted)",
-              backgroundColor: "rgba(30, 28, 25, 0.04)",
-              padding: "3px 9px",
-              borderRadius: "var(--radius-full)",
-              border: "1px solid var(--border-subtle)",
-            }}
-          >
-            Open Source · MIT
-          </span>
         </div>
       </header>
 
-      {/* Main Spatial Family Playground Canvas */}
+      {/* Main Family Canvas Experience (Dominates 85%+ of screen) */}
       <main style={{ flex: 1, position: "relative", minHeight: 0 }}>
-        <FamilyCanvas
-          mode={mode}
-          selectedPersonId={selectedPersonId}
-          onSelectPerson={setSelectedPersonId}
-          onSwitchToDemo={() => {
-            setMode("demo");
-            setSelectedPersonId(null);
-          }}
-        />
+        {mode === "demo" ? (
+          <FamilyCanvas
+            initialSelectedId={selectedPersonId}
+            initialDiscoveryPathKey={discoveryKey}
+            isNewBranchAdded={branchAdded}
+            onSelectPerson={setSelectedPersonId}
+          />
+        ) : (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px",
+              overflowY: "auto",
+            }}
+          >
+            <AlbumStarter
+              initialStep={starterStep}
+              onAnchorCreated={() => {
+                setStarterStep("anchor");
+              }}
+              onAddRelativeSlot={(role) => {
+                alert(`[Demo Slot] Staging ghost card for ${role}. In KIN milestone 5, this creates a local entity proposal.`);
+              }}
+              onTryStarterStory={(storyText) => {
+                setMode("demo");
+                handleStorySubmitted(storyText);
+              }}
+              onExploreDemo={() => {
+                setMode("demo");
+                setSelectedPersonId(null);
+              }}
+            />
+          </div>
+        )}
 
-        {/* Floating Conversational AI Composer (Pinned to Bottom of Canvas) */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "16px",
-            left: "16px",
-            right: "16px",
-            display: "flex",
-            justifyContent: "center",
-            pointerEvents: "auto",
-            zIndex: 20,
-          }}
-        >
-          <KinComposer initialStory={initialStory} />
-        </div>
+        {/* Demo AI Extraction Preview Modal (Materializes when story analyzed) */}
+        {activeExtraction && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "100px",
+              left: "16px",
+              right: "16px",
+              display: "flex",
+              justifyContent: "center",
+              zIndex: 35,
+            }}
+          >
+            <ExtractionPreview
+              candidate={activeExtraction}
+              onAccept={handleAcceptExtraction}
+              onDismiss={() => setActiveExtraction(null)}
+            />
+          </div>
+        )}
+
+        {/* Floating Conversational AI Story Note Strip (Pinned to Lower Center) */}
+        {mode === "demo" && !activeExtraction && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "16px",
+              left: "16px",
+              right: "16px",
+              display: "flex",
+              justifyContent: "center",
+              pointerEvents: "auto",
+              zIndex: 20,
+            }}
+          >
+            <KinComposer
+              onSubmitStory={handleStorySubmitted}
+              onSelectPromptStory={handlePromptStorySelect}
+            />
+          </div>
+        )}
       </main>
-
-      {/* Subtle Spatial Status Bar */}
-      <footer
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "0 0.5rem 0.25rem",
-          fontSize: "0.72rem",
-          color: "var(--text-muted)",
-          flexShrink: 0,
-        }}
-      >
-        <span>
-          {mode === "demo"
-            ? "Click relatives to explore stories and connections · Tap 'Trace kinship paths' for relationship discovery"
-            : "Click satellite actions around 'You' to branch family roots · Everything runs locally"}
-        </span>
-        <span className="spatial-footer-secondary">Local-first · Zero cloud tracking</span>
-      </footer>
     </div>
   );
 }
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", backgroundColor: "var(--bg-canvas)" }} />}>
-      <FamilyExperience />
+    <Suspense fallback={<div style={{ width: "100vw", height: "100vh", backgroundColor: "var(--bg-canvas)" }} />}>
+      <KinAppContent />
     </Suspense>
   );
 }
