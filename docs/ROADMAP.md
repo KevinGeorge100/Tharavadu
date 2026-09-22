@@ -29,7 +29,7 @@ timeline
 
 **Goal:** Establish a solid engineering foundation, eradicate lint errors, establish a 100% passing test baseline for domain logic, and lock down configuration hygiene.
 
-- [ ] **KIN-001 (P0): Backend Lint & Code Quality Configuration**
+- [x] **KIN-001 (P0): Backend Lint & Code Quality Configuration**
   - Configure Ruff in `pyproject.toml` or `ruff.toml` to recognize `fastapi.Depends` as immutable (`extend-immutable-calls`).
   - Fix regex alias warnings (`re.I` -> `re.IGNORECASE`).
   - Achieve clean `ruff check backend` with 0 warnings/errors.
