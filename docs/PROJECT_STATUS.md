@@ -86,11 +86,12 @@ The following matrix distinguishes between code existence, automated testing, in
 
 ## 6. Technical Debt Register
 
-1. **Missing Test Infrastructure:** Backend domain logic (`domain.py`) contains complex graph math and cycle detection, but zero unit tests exist to prevent regressions during future development.
-2. **Missing Frontend Source:** Frontend package has installed heavy dependencies (`@xyflow/react`, `lucide-react`, `next`, `react`) but has no scaffolding, pages, components, or test harnesses.
+1. **Test Infrastructure [RESOLVED for Domain in KIN-002]:** Established 88 unit tests in `backend/tests/` covering domain logic, kinship classifications, queries, and schemas. API integration tests remain for KIN-005.
+2. **Missing Frontend Source:** Frontend package has installed heavy dependencies (`@xyflow/react`, `lucide-react`, `next`, `react`) but has no scaffolding, pages, components, or test harnesses. Scheduled for KIN-004.
 3. **Lint Configuration Gap [RESOLVED in KIN-001]:** Configured `extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]` in `pyproject.toml` and migrated regex aliases to `re.IGNORECASE`.
 4. **Graph Replacement Strategy in Neo4j:** `Neo4jGraphRepository.save()` executes a full `MATCH (p:Person) DETACH DELETE p` and reconstructs all nodes and edges per commit. While capped at 500 nodes for MVP, this approach creates large write transactions and churn in Neo4j transaction logs.
 5. **No Migration Tooling:** Schema is declared via SQLAlchemy Table objects and created with `metadata.create_all()`. No Alembic migration scripts exist for evolving database schemas.
+6. **Developer Setup & Environment [RESOLVED in KIN-003]:** Created `.env.example` template and comprehensive root `README.md` documenting zero-dependency local SQLite mode and optional external service integrations.
 
 ---
 
