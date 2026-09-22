@@ -266,3 +266,10 @@ Key architectural choices are formally documented in [`docs/adr/`](file:///c:/Pr
 - **Completed:** M0 Stabilization (KIN-001 Lint Baseline, KIN-002 Domain Unit Tests, KIN-003 Environment & Setup).
 - **Next Up:** **KIN-004** — Next.js App Router visual foundation and modern dark-mode design system.
 - **Following:** **KIN-005** — FastAPI integration test suite with `httpx.ASGITransport`.
+
+---
+
+## License
+
+Project KIN is open-source software released under the [MIT License](file:///c:/Projects/KIN/LICENSE).  
+Copyright (c) 2026 KIN contributors.
