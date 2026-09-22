@@ -12,8 +12,8 @@ KIN is an AI-assisted personal genealogy and kinship reasoning system designed t
 
 The repository currently exhibits a significant asymmetry:
 - **Backend (`backend/app/`):** Contains a tightly scoped, functioning prototype implementation of deterministic kinship reasoning (`domain.py`, `queries.py`), schema validation (`schemas.py`), dual AI extraction providers (`ai.py` supporting offline regex and OpenAI structured outputs), dual graph backends (`database.py` supporting SQLite snapshot and Neo4j atomic graph replacement), and session-based FastAPI endpoints (`main.py`).
-- **Frontend (`frontend/`):** Contains only package and build tooling manifests (`package.json`, `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `node_modules`). **No application source files (pages, components, layouts, styles) exist.** Running `next build` fails immediately.
-- **Testing & Quality Assurance:** Deterministic domain unit test suite established (88 tests in `backend/tests/`, 100% passing). API integration tests and Playwright E2E tests are not yet configured.
+- **Frontend (`frontend/`):** Next.js App Router foundation and responsive shell established (`app/layout.tsx`, `app/page.tsx`, `app/globals.css`, `components/constellation-preview.tsx`). `next build`, `npm run lint`, and `npm run typecheck` all pass with 0 errors.
+- **Testing & Quality Assurance:** Deterministic domain unit test suite established (88 tests in `backend/tests/`, 100% passing). API integration tests and Playwright E2E tests are scheduled for subsequent milestones.
 - **Git State:** Newly initialized Git repository with active development branches off `main`.
 
 ---
@@ -22,11 +22,11 @@ The repository currently exhibits a significant asymmetry:
 
 | Dimension | Assessment | Evidence |
 | :--- | :--- | :--- |
-| **Overall Maturity** | **FUNCTIONAL PROTOTYPE (Backend) / SKELETON (Frontend)** | Backend logic imports and handles API lifecycles; frontend UI is completely unwritten; backend domain test coverage is 100%. |
+| **Overall Maturity** | **FUNCTIONAL PROTOTYPE (Backend) / PROTOTYPE SHELL (Frontend)** | Backend logic handles API lifecycles with 88 passing unit tests; frontend App Router shell builds cleanly and renders responsive constellation demo. |
 | **Domain Logic** | **FUNCTIONAL PROTOTYPE** | Kinship classification, ancestry cycle detection, and identity resolution algorithms are fully codified in Python and covered by 88 unit tests. |
 | **AI Integration** | **PARTIALLY IMPLEMENTED / PROPOSAL-ONLY** | Dual extraction paths exist (offline regex and OpenAI structured outputs). Both produce `Extraction` proposals; direct write access to the graph is prohibited by design. |
 | **Persistence** | **FUNCTIONAL PROTOTYPE (Local) / UNVERIFIED (Neo4j/Postgres)** | SQLite schema initialization and local snapshot storage work; Neo4j repository code exists but lacks integration test coverage. |
-| **Frontend UI** | **NOT IMPLEMENTED / SKELETON** | No `app/` or `pages/` directory exists. Dependencies (`@xyflow/react`, `lucide-react`, `next`, `react`) are installed in `node_modules` but unrendered. |
+| **Frontend UI** | **FUNCTIONAL SHELL** | App Router scaffolding, dark-first constellation design tokens, interactive fictional preview, and responsive shell implemented. Production React Flow canvas scheduled for KIN-007. |
 | **Automated Testing** | **FUNCTIONAL PROTOTYPE (Backend Domain)** | 88 pytest unit tests pass covering validation, cycle detection, kinship classification, queries, and schemas. E2E tests unconfigured. |
 
 ---
@@ -50,8 +50,8 @@ The following matrix distinguishes between code existence, automated testing, in
 | **Demo Family Seed Generation** | IMPLEMENTED (Unverified) | `backend/app/seed.py` | Code Exists | Generates 8-person fictional family (George, Anna, Joseph, Leena, etc.). |
 | **Local Graph Snapshot Storage** | IMPLEMENTED (Unverified) | `backend/app/database.py` | Code Exists | Stores serialized JSON graph snapshot in `local_graphs` SQL table with optimistic revision check. |
 | **Neo4j Graph Repository** | IMPLEMENTED (Unverified) | `backend/app/database.py` | Code Exists | Full atomic graph replacement using Neo4j write transaction and family root locking. Untested against live Neo4j. |
-| **Frontend Web Workspace & UI** | NOT IMPLEMENTED | `frontend/` | Missing | No React components, layout, or pages exist. `next build` fails. |
-| **Frontend Interactive Graph Visualization** | PLANNED | `frontend/package.json` | Dependencies Only | `@xyflow/react` and `@dagrejs/dagre` installed; UI code not started. |
+| **Frontend Web Workspace & UI** | IMPLEMENTED (Shell & Demo) | `frontend/app/`<br>`frontend/components/` | Code Exists & Builds | Responsive App Router shell, warm design tokens, first-run story prompt, and interactive constellation demo. `next build` passes. |
+| **Frontend Interactive Graph Visualization** | PLANNED | `frontend/package.json` | Dependencies Only | `@xyflow/react` and `@dagrejs/dagre` installed; full interactive canvas scheduled for KIN-007. |
 | **Automated End-to-End Tests** | NOT CONFIGURED | `frontend/` | Missing | Playwright installed in `package.json`; no test suites written. |
 
 ---
@@ -66,9 +66,9 @@ The following matrix distinguishes between code existence, automated testing, in
 | **Backend Unit Tests** | `pytest` | **PASS** | 0 | 88 items collected, 88 passed across domain, kinship, query, and schema test modules. |
 | **Backend Lint** | `ruff check backend` | **PASS** | 0 | All checks passed with zero errors/warnings (configured via pyproject.toml). |
 | **Backend Typecheck** | `mypy` / `pyright` | **NOT CONFIGURED** | N/A | No typechecker configuration or dependency installed. |
-| **Frontend Typecheck** | `npm run typecheck` (`tsc --noEmit`) | **PASS** | 0 | No `.ts`/`.tsx` application files present to fail. |
-| **Frontend Lint** | `npm run lint` (`eslint .`) | **PASS (Warning)** | 0 | Warns: "Pages directory cannot be found at pages or src/pages". |
-| **Frontend Build** | `npm run build` (`next build`) | **FAIL** | 1 | "Couldn't find any 'pages' or 'app' directory. Please create one under the project root". |
+| **Frontend Typecheck** | `npm run typecheck` (`tsc --noEmit`) | **PASS** | 0 | TypeScript strict check passed with 0 errors. |
+| **Frontend Lint** | `npm run lint` (`eslint .`) | **PASS** | 0 | ESLint flat config passed with 0 errors and 0 warnings. |
+| **Frontend Build** | `npm run build` (`next build`) | **PASS** | 0 | Next.js App Router standalone production bundle built successfully. |
 | **Frontend E2E Tests** | `npm test` (`playwright test`) | **FAIL (No tests)** | 1 | "Error: No tests found". |
 
 ---
@@ -87,7 +87,7 @@ The following matrix distinguishes between code existence, automated testing, in
 ## 6. Technical Debt Register
 
 1. **Test Infrastructure [RESOLVED for Domain in KIN-002]:** Established 88 unit tests in `backend/tests/` covering domain logic, kinship classifications, queries, and schemas. API integration tests remain for KIN-005.
-2. **Missing Frontend Source:** Frontend package has installed heavy dependencies (`@xyflow/react`, `lucide-react`, `next`, `react`) but has no scaffolding, pages, components, or test harnesses. Scheduled for KIN-004.
+2. **Frontend Foundation [RESOLVED in KIN-004]:** Scaffolded Next.js App Router, warm constellation design system, and interactive fictional preview. Production React Flow interactive canvas scheduled for KIN-007.
 3. **Lint Configuration Gap [RESOLVED in KIN-001]:** Configured `extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]` in `pyproject.toml` and migrated regex aliases to `re.IGNORECASE`.
 4. **Graph Replacement Strategy in Neo4j:** `Neo4jGraphRepository.save()` executes a full `MATCH (p:Person) DETACH DELETE p` and reconstructs all nodes and edges per commit. While capped at 500 nodes for MVP, this approach creates large write transactions and churn in Neo4j transaction logs.
 5. **No Migration Tooling:** Schema is declared via SQLAlchemy Table objects and created with `metadata.create_all()`. No Alembic migration scripts exist for evolving database schemas.

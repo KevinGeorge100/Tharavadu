@@ -1,0 +1,136 @@
+/* =============================================================================
+   KIN — Warm Family Constellation Design System Tokens
+   ============================================================================= */
+
+:root {
+  /* Surfaces */
+  --bg-canvas: #0e0f12;
+  --bg-surface: #15171c;
+  --bg-surface-elevated: #1d2027;
+  --bg-surface-hover: #252932;
+  --bg-surface-active: #2b303b;
+
+  /* Typography */
+  --text-primary: #f5f2eb;
+  --text-secondary: #aba69b;
+  --text-muted: #736e65;
+  --text-inverted: #0e0f12;
+
+  /* Primary Accent: Warm Amber / Apricot */
+  --accent-amber: #e08846;
+  --accent-amber-hover: #eb9655;
+  --accent-amber-soft: rgba(224, 136, 70, 0.14);
+  --accent-amber-glow: rgba(224, 136, 70, 0.32);
+
+  /* Family Branch Constellation Tones */
+  --branch-sage: #7da887;
+  --branch-sage-soft: rgba(125, 168, 135, 0.16);
+  --branch-teal: #629f9e;
+  --branch-teal-soft: rgba(98, 159, 158, 0.16);
+  --branch-rose: #c47d87;
+  --branch-rose-soft: rgba(196, 125, 135, 0.16);
+  --branch-violet: #9d8ab8;
+  --branch-violet-soft: rgba(157, 138, 184, 0.16);
+
+  /* Lines & Borders */
+  --border-subtle: rgba(245, 242, 235, 0.07);
+  --border-default: rgba(245, 242, 235, 0.12);
+  --border-hover: rgba(245, 242, 235, 0.22);
+  --border-focus: #e08846;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 24px var(--accent-amber-glow);
+
+  /* Animation Timings */
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 160ms;
+  --duration-normal: 260ms;
+}
+
+/* Base Document Reset & Setup */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+/* Accessibility Focus Ring */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
+/* Global Link Defaults */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* Subtle Constellation Star Background */
+.constellation-stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, rgba(245, 242, 235, 0.15), transparent),
+    radial-gradient(1px 1px at 140px 70px, rgba(245, 242, 235, 0.1), transparent),
+    radial-gradient(1.5px 1.5px at 280px 180px, rgba(224, 136, 70, 0.25), transparent),
+    radial-gradient(1px 1px at 420px 90px, rgba(245, 242, 235, 0.12), transparent),
+    radial-gradient(1.5px 1.5px at 600px 240px, rgba(125, 168, 135, 0.2), transparent),
+    radial-gradient(1px 1px at 750px 140px, rgba(245, 242, 235, 0.1), transparent),
+    radial-gradient(1px 1px at 900px 320px, rgba(245, 242, 235, 0.14), transparent),
+    radial-gradient(1.5px 1.5px at 1050px 80px, rgba(196, 125, 135, 0.2), transparent);
+  background-repeat: repeat;
+  background-size: 1100px 400px;
+  opacity: 0.8;
+  z-index: 0;
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

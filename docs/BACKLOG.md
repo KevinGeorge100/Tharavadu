@@ -70,7 +70,7 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 
 ### KIN-004: Frontend Application Foundation & Scaffolding
 - **Priority:** P0
-- **Status:** READY
+- **Status:** REVIEW
 - **Goal:** Create the Next.js App Router scaffolding in `frontend/` so that `npm run build`, `npm run lint`, and `npm run typecheck` pass.
 - **Reason:** `frontend/` currently contains only configuration files and dependencies; `next build` fails immediately due to a missing `app/` or `pages/` directory.
 - **Dependencies:** None.

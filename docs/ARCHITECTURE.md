@@ -10,13 +10,13 @@ This document specifies the software architecture for KIN. It explicitly separat
 
 KIN is organized as a polyglot monorepo:
 - **Backend:** Python (FastAPI + Pydantic v2 + SQLAlchemy v2) under `backend/app/`.
-- **Frontend Workspace:** Next.js (TypeScript) build configuration under `frontend/` (application source code not yet implemented).
+- **Frontend Workspace:** Next.js 16 (TypeScript) App Router shell and warm constellation visual foundation (`frontend/app/`, `frontend/components/`). Full React Flow canvas integration planned for KIN-007.
 - **Core Reasoning Engine:** Pure Python deterministic graph traversal, cycle detection, and kinship classification (`backend/app/domain.py`, `backend/app/queries.py`). **No LLMs are used for graph reasoning or relationship determination.**
 
 ```mermaid
 flowchart TD
-  subgraph Client ["Client Layer (Target)"]
-    Browser["Next.js Web UI\n(App Router / React Flow)\n[NOT YET IMPLEMENTED]"]
+  subgraph Client ["Client Layer"]
+    Browser["Next.js Web UI\n(App Router Shell & Demo)\n[Scaffolded in KIN-004]"]
   end
 
   subgraph Gateway ["Reverse Proxy & Network Security"]
