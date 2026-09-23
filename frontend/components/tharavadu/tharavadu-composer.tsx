@@ -3,13 +3,13 @@
 import React, { useState } from "react";
 import { DEMO_PROMPT_STORIES, DemoPromptStory } from "@/data/demo-stories";
 
-interface KinComposerProps {
+interface TharavaduComposerProps {
   initialStory?: string | null;
   onSubmitStory: (storyText: string) => void;
   onSelectPromptStory?: (story: DemoPromptStory) => void;
 }
 
-export function KinComposer({ initialStory = "", onSubmitStory, onSelectPromptStory }: KinComposerProps) {
+export function TharavaduComposer({ initialStory = "", onSubmitStory, onSelectPromptStory }: TharavaduComposerProps) {
   const [input, setInput] = useState(initialStory || "");
 
   const handleSubmit = (e?: React.FormEvent) => {
@@ -72,14 +72,14 @@ export function KinComposer({ initialStory = "", onSubmitStory, onSelectPromptSt
       >
         <div className="tape-strip" style={{ width: 40, height: 12, top: -7 }} />
         <p className="kin-stamp" style={{ fontSize: "0.72rem", marginBottom: 8 }}>
-          Tell KIN a story
+          Tell Tharavadu a story
         </p>
         <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-          <label htmlFor="kin-story-input" className="sr-only" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden" }}>
+          <label htmlFor="tharavadu-story-input" className="sr-only" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden" }}>
             Family story
           </label>
           <textarea
-            id="kin-story-input"
+            id="tharavadu-story-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="My grandfather Joseph had two brothers called Mathew and Thomas."
@@ -97,7 +97,7 @@ export function KinComposer({ initialStory = "", onSubmitStory, onSelectPromptSt
             }}
           />
           <button type="submit" disabled={!input.trim()} className="kin-press" style={{ padding: "10px 14px", minWidth: 92, minHeight: 44 }}>
-            Tell KIN →
+            Tell Tharavadu →
           </button>
         </div>
       </form>

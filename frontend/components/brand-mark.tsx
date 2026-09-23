@@ -3,9 +3,10 @@ import React from "react";
 interface BrandMarkProps {
   size?: number;
   className?: string;
+  ariaLabel?: string;
 }
 
-export function BrandMark({ size = 28, className = "" }: BrandMarkProps) {
+export function BrandMark({ size = 28, className = "", ariaLabel }: BrandMarkProps) {
   return (
     <svg
       width={size}
@@ -14,8 +15,11 @@ export function BrandMark({ size = 28, className = "" }: BrandMarkProps) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      aria-hidden="true"
+      role={ariaLabel ? "img" : undefined}
+      aria-label={ariaLabel}
+      aria-hidden={ariaLabel ? undefined : "true"}
     >
+      {ariaLabel && <title>{ariaLabel}</title>}
       <rect x="1.5" y="1.5" width="29" height="29" fill="#fff8ea" stroke="#161310" strokeWidth="2.5" />
       <path d="M16 6.5 C11 12 9 16 16 26" stroke="#161310" strokeWidth="2.2" fill="none" />
       <path d="M16 6.5 C21 12 23 16 16 26" stroke="#e04d12" strokeWidth="2.2" fill="none" />

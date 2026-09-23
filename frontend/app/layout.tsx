@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "KIN — Family stories, connected",
+  title: "Tharavadu — Family stories, connected",
   description: "An open-source, AI-assisted family discovery and memory graph.",
   keywords: ["genealogy", "kinship", "family history", "open source", "local-first", "graph reasoning"],
-  authors: [{ name: "KIN contributors" }],
+  authors: [{ name: "Tharavadu contributors" }],
 };
 
 export const viewport: Viewport = {

@@ -19,7 +19,7 @@ from .queries import answer
 from .schemas import Confirm, Credentials, FamilyCreate, Graph, MemoryCreate, Person, PersonEdit, TextInput
 from .seed import demo_graph
 
-logger = logging.getLogger("kin")
+logger = logging.getLogger("tharavadu")
 
 
 def password_hash(password, salt=None):
@@ -46,7 +46,7 @@ def create_app(config: Settings = settings, provider=None):
         graph_repo.close()
         db.engine.dispose()
 
-    app = FastAPI(title="KIN API", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Tharavadu API", version="0.1.0", lifespan=lifespan)
     app.state.db, app.state.graph = db, graph_repo
     attempts = {}
 
@@ -54,7 +54,7 @@ def create_app(config: Settings = settings, provider=None):
     async def safeguards(request: Request, call_next):
         started = time.monotonic()
         if request.method not in ("GET", "HEAD", "OPTIONS"):
-            if request.headers.get("x-kin-client") != "web" or request.headers.get("origin", config.app_origin) != config.app_origin:
+            if request.headers.get("x-tharavadu-client") != "web" or request.headers.get("origin", config.app_origin) != config.app_origin:
                 return JSONResponse({"detail": "Invalid request origin"}, status_code=403)
             if int(request.headers.get("content-length", 0)) > 100_000:
                 return JSONResponse({"detail": "Request too large"}, status_code=413)
@@ -84,7 +84,7 @@ def create_app(config: Settings = settings, provider=None):
         return JSONResponse({"detail": "A service is unavailable. Your changes may not have saved; refresh before retrying."}, status_code=503)
 
     def current_user(request: Request):
-        cookie = request.cookies.get("kin_session", "")
+        cookie = request.cookies.get("tharavadu_session", "")
         row = db.one(select(sessions).where(sessions.c.id == token_hash(cookie), sessions.c.expires > time.time()))
         if not row:
             raise HTTPException(401, "Sign in to continue")
@@ -99,7 +99,7 @@ def create_app(config: Settings = settings, provider=None):
     def session(response, user_id):
         token = secrets.token_urlsafe(32)
         db.execute(sessions.insert().values(id=token_hash(token), user_id=user_id, expires=time.time()+config.session_days*86400))
-        response.set_cookie("kin_session", token, httponly=True, secure=config.cookie_secure, samesite="lax", max_age=config.session_days*86400, path="/")
+        response.set_cookie("tharavadu_session", token, httponly=True, secure=config.cookie_secure, samesite="lax", max_age=config.session_days*86400, path="/")
 
     def rate_limit(request):
         ip = request.client.host if request.client else "unknown"
@@ -142,8 +142,8 @@ def create_app(config: Settings = settings, provider=None):
 
     @app.post("/api/auth/logout")
     def logout(request: Request, response: Response):
-        db.execute(sessions.delete().where(sessions.c.id == token_hash(request.cookies.get("kin_session", ""))))
-        response.delete_cookie("kin_session", path="/")
+        db.execute(sessions.delete().where(sessions.c.id == token_hash(request.cookies.get("tharavadu_session", ""))))
+        response.delete_cookie("tharavadu_session", path="/")
         return {"ok": True}
 
     @app.get("/api/me")

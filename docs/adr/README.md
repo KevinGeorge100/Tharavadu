@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs)
 
-This directory contains the Architecture Decision Records for KIN. ADRs document significant architectural decisions, their business and technical context, alternatives considered, and their consequences.
+This directory contains the Architecture Decision Records for Tharavadu. ADRs document significant architectural decisions, their business and technical context, alternatives considered, and their consequences.
 
 ---
 

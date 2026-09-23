@@ -1,6 +1,6 @@
 # AI Agent Development Workflow
 
-This document defines the mandatory, step-by-step operating procedure for AI coding assistants working in the KIN repository. Every implementation task must adhere strictly to this lifecycle.
+This document defines the mandatory, step-by-step operating procedure for AI coding assistants working in the Tharavadu repository. Every implementation task must adhere strictly to this lifecycle.
 
 ---
 

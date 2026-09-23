@@ -151,12 +151,12 @@ export const INITIAL_DEMO_MEMBERS: FamilyMember[] = [
     branchBorder: "var(--accent-warm-border)",
     rotationDeg: -0.5,
     portraitType: "silhouette-nora",
-    quote: "Gathering spoken memories, tape recordings, and letters into KIN's living album.",
+    quote: "Gathering spoken memories, tape recordings, and letters into Tharavadu's living album.",
     memoriesCount: 6,
     photosCount: 11,
     archivalNotes: [
       "Digitized Eleanor's cassette interviews in summer 2023.",
-      "Initiated KIN's local family memory vault.",
+      "Initiated Tharavadu's local family memory vault.",
     ],
     directConnections: [
       { id: "julian", name: "Julian Davis", relation: "Father" },

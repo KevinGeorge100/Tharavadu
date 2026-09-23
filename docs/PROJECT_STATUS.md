@@ -1,4 +1,4 @@
-# KIN — Project Status & Reality Assessment
+# Tharavadu — Project Status & Reality Assessment
 
 **Status as of:** September 2026  
 **Engineering Baseline Assessment:** Initial Audit & Governance Bootstrap  
@@ -8,11 +8,11 @@
 
 ## 1. Executive Summary
 
-KIN is an AI-assisted personal genealogy and kinship reasoning system designed to capture family narratives, extract genealogical relations into structured proposals, resolve identity ambiguities with human oversight, and maintain an immutable, cycle-free family graph with deterministic reasoning.
+Tharavadu is an AI-assisted personal genealogy and kinship reasoning system designed to capture family narratives, extract genealogical relations into structured proposals, resolve identity ambiguities with human oversight, and maintain an immutable, cycle-free family graph with deterministic reasoning.
 
 The repository currently exhibits a significant asymmetry:
 - **Backend (`backend/app/`):** Contains a tightly scoped, functioning prototype implementation of deterministic kinship reasoning (`domain.py`, `queries.py`), schema validation (`schemas.py`), dual AI extraction providers (`ai.py` supporting offline regex and OpenAI structured outputs), dual graph backends (`database.py` supporting SQLite snapshot and Neo4j atomic graph replacement), and session-based FastAPI endpoints (`main.py`).
-- **Frontend (`frontend/`):** Next.js App Router spatial canvas established (`app/layout.tsx`, `app/page.tsx`, `app/globals.css`, `components/family-canvas.tsx`, `components/person-node.tsx`, `components/person-card.tsx`, `components/kin-composer.tsx`, `data/demo-family.ts`). Light-first warm scrapbook palette, conversational AI composer, and 3-generation constellation explorer. `next build`, `npm run lint`, and `npm run typecheck` all pass with 0 errors.
+- **Frontend (`frontend/`):** Next.js App Router spatial canvas established (`app/layout.tsx`, `app/page.tsx`, `app/globals.css`, `components/family-canvas.tsx`, `components/person-node.tsx`, `components/person-card.tsx`, `components/tharavadu/tharavadu-composer.tsx`, `data/demo-family.ts`). Light-first warm scrapbook palette, conversational AI composer, and 3-generation constellation explorer. `next build`, `npm run lint`, and `npm run typecheck` all pass with 0 errors.
 - **Testing & Quality Assurance:** Deterministic domain unit test suite established (88 tests in `backend/tests/`, 100% passing). API integration tests and Playwright E2E tests are scheduled for subsequent milestones.
 - **Git State:** Newly initialized Git repository with active development branches off `main`.
 
@@ -79,7 +79,7 @@ The following matrix distinguishes between code existence, automated testing, in
 | :--- | :--- | :--- | :--- | :--- |
 | **SEC-01** | **MEDIUM** | Rate Limiting | `rate_limit()` in `backend/app/main.py` uses an in-memory dictionary keyed by client IP (`attempts = {}`). In multi-worker or restarted environments, limits are bypassed. IP spoofing possible behind proxies if `request.client.host` is trusted without validated headers. | Introduce Redis/database-backed rate limiting or edge proxy enforcement before production multi-worker deployment. |
 | **SEC-02** | **MEDIUM** | Session Expiration & Invalidation | Expired sessions are not automatically pruned from the `sessions` SQL table on a schedule. Session IDs are SHA-256 hashed, which is good practice. | Implement a periodic cleanup job or DB trigger for expired sessions. |
-| **SEC-03** | **LOW** | Client Request Header Spoofing | CSRF safeguard relies on `x-kin-client: web` and `Origin` header matching `config.app_origin`. If behind misconfigured reverse proxies, `Origin` header checks require strict normalization. | Validate proxy configuration and enforce SameSite cookies on all deployment targets. |
+| **SEC-03** | **LOW** | Client Request Header Spoofing | CSRF safeguard relies on `x-tharavadu-client: web` and `Origin` header matching `config.app_origin`. If behind misconfigured reverse proxies, `Origin` header checks require strict normalization. | Validate proxy configuration and enforce SameSite cookies on all deployment targets. |
 | **SEC-04** | **LOW** | Secret Configuration Defaults | Default configuration in `config.py` sets empty strings for `neo4j_password` and `openai_api_key`. While secure by default (fails closed), production setups must fail fast on startup if required credentials are empty. | Add startup configuration validation in `lifespan` when provider is set to `openai` or `neo4j`. |
 
 ---
@@ -98,6 +98,6 @@ The following matrix distinguishes between code existence, automated testing, in
 ## 7. Infrastructure & Deployment State
 
 - **Current Environment:** Windows local workstation (`powershell`). Python virtual environment active at `.venv/` (Python 3.14.7). Node.js v24.20.0 and npm 11.19.0.
-- **Databases:** SQLite configured as default `database_url = "sqlite:///./kin.db"`. No PostgreSQL or Neo4j containers currently running.
+- **Databases:** SQLite configured as default `database_url = "sqlite:///./tharavadu.db"`. No PostgreSQL or Neo4j containers currently running.
 - **Docker / Compose:** No `docker-compose.yml` or `Dockerfile` present in repository despite references in `docs/ARCHITECTURE.md`.
 - **CI/CD:** No GitHub Actions or automated workflow files exist (`.github/` directory missing).

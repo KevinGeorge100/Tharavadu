@@ -1,6 +1,6 @@
-# KIN Architecture
+# Tharavadu Architecture
 
-This document specifies the software architecture for KIN. It explicitly separates the **Current Architecture** (verified by repository code) from the **Target Architecture** (planned for subsequent milestones).
+This document specifies the software architecture for Tharavadu. It explicitly separates the **Current Architecture** (verified by repository code) from the **Target Architecture** (planned for subsequent milestones).
 
 ---
 
@@ -8,7 +8,7 @@ This document specifies the software architecture for KIN. It explicitly separat
 
 ### System Overview
 
-KIN is organized as a polyglot monorepo:
+Tharavadu is organized as a polyglot monorepo:
 - **Backend:** Python (FastAPI + Pydantic v2 + SQLAlchemy v2) under `backend/app/`.
 - **Frontend Workspace:** Next.js 16 (TypeScript) App Router shell and warm constellation visual foundation (`frontend/app/`, `frontend/components/`). Full React Flow canvas integration planned for KIN-007.
 - **Core Reasoning Engine:** Pure Python deterministic graph traversal, cycle detection, and kinship classification (`backend/app/domain.py`, `backend/app/queries.py`). **No LLMs are used for graph reasoning or relationship determination.**
@@ -89,7 +89,7 @@ sequenceDiagram
   participant Graph as Graph Repository
 
   User->>API: POST /api/families/{id}/proposals (raw text)
-  Note over API: Verifies x-kin-client & origin<br/>Validates session & family ownership
+  Note over API: Verifies x-tharavadu-client & origin<br/>Validates session & family ownership
   API->>AI: extract(text, current_graph, self_id)
   AI-->>API: Extraction Proposal (uncommitted)
   API->>DB: Save proposal (status: pending, revision: N)
@@ -130,7 +130,7 @@ sequenceDiagram
 ### Persistence Strategy
 
 - **Dual-Engine Pattern:**
-  - **Local Development Mode:** Uses SQLite (`sqlite:///./kin.db`) for all relational tables, plus a `local_graphs` table storing serialized graph snapshots with revision tracking.
+  - **Local Development Mode:** Uses SQLite (`sqlite:///./tharavadu.db`) for all relational tables, plus a `local_graphs` table storing serialized graph snapshots with revision tracking.
   - **Production Mode:** PostgreSQL for relational tables (users, sessions, families, proposals, memories) and Neo4j for property graph persistence.
 - **Transaction Boundary:**
   - Graph and SQL metadata do not share a distributed transaction (2PC).
@@ -139,10 +139,10 @@ sequenceDiagram
 
 ### Security Architecture
 
-- **Authentication:** Stateful cookie sessions (`kin_session`). Session tokens are generated with 32 bytes of cryptographically secure random entropy (`secrets.token_urlsafe(32)`), hashed using SHA-256 before SQL insertion, and set with `HttpOnly`, `SameSite=Lax`, and configurable `Secure` flags.
+- **Authentication:** Stateful cookie sessions (`tharavadu_session`). Session tokens are generated with 32 bytes of cryptographically secure random entropy (`secrets.token_urlsafe(32)`), hashed using SHA-256 before SQL insertion, and set with `HttpOnly`, `SameSite=Lax`, and configurable `Secure` flags.
 - **Passwords:** Hashed with `scrypt` (`n=16384, r=8, p=1`) using a 16-byte random salt, validated with `hmac.compare_digest`.
 - **Authorization:** Every family resource enforces tenant boundary via `family_access` dependency (`owner == user_id`).
-- **CSRF Safeguards:** Non-idempotent endpoints verify `x-kin-client: web` header and origin parity against `config.app_origin`.
+- **CSRF Safeguards:** Non-idempotent endpoints verify `x-tharavadu-client: web` header and origin parity against `config.app_origin`.
 - **Payload Limits:** Request bodies on mutating requests are capped at 100,000 bytes.
 - **Privacy & Logging:** Fast-fail logging records only route templates, status codes, and latency (`request route=%s status=%s duration_ms=%d`). No family member names, notes, or graph facts are written to logs.
 

@@ -1,4 +1,4 @@
-# KIN Definition of Done (DoD)
+# Tharavadu Definition of Done (DoD)
 
 This document establishes the mandatory quality and completeness criteria that every backlog item, task branch, and pull request must satisfy before work is considered **Done** and promoted to the `main` branch.
 
@@ -31,7 +31,7 @@ Every task must satisfy all applicable items below before being presented for hu
 - [ ] **7. Security & Privacy Review:**
   - No secrets, tokens, API keys, or credentials are introduced in source code or documentation.
   - Multi-tenant family isolation is strictly maintained; no endpoints expose cross-tenant data.
-  - Mutating endpoints require session authentication and enforce CSRF origin headers (`x-kin-client: web`).
+  - Mutating endpoints require session authentication and enforce CSRF origin headers (`x-tharavadu-client: web`).
   - No personally identifiable information (PII) or family member data is logged.
 - [ ] **8. Scope Control Enforced:**
   - No opportunistic refactoring or "while-I-was-here" modifications outside the declared task scope.

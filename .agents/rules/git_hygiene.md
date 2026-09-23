@@ -1,12 +1,12 @@
 # Git Hygiene & Branching Strategy
 
-This document establishes the Git standards, branching model, and commit policies for KIN.
+This document establishes the Git standards, branching model, and commit policies for Tharavadu.
 
 ---
 
 ## 1. Branching Topology
 
-KIN adheres to a strict, simplified trunk-based branching strategy:
+Tharavadu adheres to a strict, simplified trunk-based branching strategy:
 
 ```
 main (Canonical Production & Staging Trunk)
@@ -37,7 +37,7 @@ task/KIN-XXX-short-description (Short-lived task branch)
    - If `main` has moved ahead, rebase the task branch onto latest `main` (`git rebase main`), re-run tests, and re-verify before merging.
 6. **No Force Pushes:** Never run `git push --force` or `--force-with-lease` on `main`.
 7. **No History Rewriting on Shared Branches:** Rebase operations are strictly restricted to unmerged local task branches.
-8. **Clean Working Tree:** Do not leave untracked scratch files, build artifacts, or temporary database files (`kin.db`, `.pytest_cache`, `.next`, `node_modules`) in Git tracking. Ensure `.gitignore` is maintained.
+8. **Clean Working Tree:** Do not leave untracked scratch files, build artifacts, or temporary database files (`tharavadu.db`, `kin.db`, `.pytest_cache`, `.next`, `node_modules`) in Git tracking. Ensure `.gitignore` is maintained.
 
 ---
 

@@ -1,4 +1,4 @@
-# KIN 🌳
+# Tharavadu 🌳
 
 **AI-Assisted Personal Family Discovery & Kinship Reasoning**
 
@@ -6,28 +6,28 @@
 
 ---
 
-## What is KIN?
+## What is Tharavadu?
 
-**KIN** is a playful, personal, story-driven family discovery workspace. Instead of filling out rigid, intimidating genealogy forms with dozens of empty date pickers, you simply share your family narratives in everyday natural language:
+**Tharavadu** is a playful, personal, story-driven family discovery workspace. Instead of filling out rigid, intimidating genealogy forms with dozens of empty date pickers, you simply share your family narratives in everyday natural language:
 
 > *"My father Joseph has an older brother named Thomas. Thomas has two children named Raj and Maya."*
 
-From there, KIN:
+From there, Tharavadu:
 1. **Listens & Proposes:** An AI/NLP extraction engine reads your words and creates a typed, human-reviewable change proposal.
-2. **Empowers Human Oversight:** If names are ambiguous (like having two relatives named *"George"*), KIN never guesses. It asks you to clarify with a single click.
+2. **Empowers Human Oversight:** If names are ambiguous (like having two relatives named *"George"*), Tharavadu never guesses. It asks you to clarify with a single click.
 3. **Maintains Graph Truth:** Once confirmed, facts are committed to a cycle-free family graph.
 4. **Reasons Deterministically:** Formal graph algorithms compute exact relationships—such as *"first cousin, 1 time removed"*, *"great-aunt"*, or complex in-law paths—with transparent, step-by-step explanations.
 
 ---
 
-## Why KIN Exists
+## Why Tharavadu Exists
 
-Genealogy software is often clunky, corporate, or overly academic. KIN treats family history as a living, conversational discovery experience:
+Genealogy software is often clunky, corporate, or overly academic. Tharavadu treats family history as a living, conversational discovery experience:
 - **Playful & Visual:** Built for visual exploration, narrative memory journaling, and relational questions (*"How are Raj and Joseph related?"*).
-- **Zero Hallucinations on Kinship:** Large language models are fantastic at interpreting human language, but notoriously unreliable at mathematical graph traversal and multi-generational logic. KIN strictly separates language understanding from graph reasoning.
+- **Zero Hallucinations on Kinship:** Large language models are fantastic at interpreting human language, but notoriously unreliable at mathematical graph traversal and multi-generational logic. Tharavadu strictly separates language understanding from graph reasoning.
 
 ```
-                   THE KIN ARCHITECTURAL BOUNDARY
+                THE THARAVADU ARCHITECTURAL BOUNDARY
   ┌─────────────────────────────────────────────────────────────┐
   │                 AI / Extraction Boundary                    │
   │  • Interpret informal English narratives                    │
@@ -74,7 +74,7 @@ Genealogy software is often clunky, corporate, or overly academic. KIN treats fa
 ## Repository Structure
 
 ```
-KIN/
+tharavadu/
 ├── backend/
 │   ├── app/
 │   │   ├── ai.py          # Dual extraction providers (offline regex + OpenAI structured outputs)
@@ -101,7 +101,7 @@ KIN/
 
 ## Prerequisites
 
-Before running KIN, make sure you have:
+Before running Tharavadu, make sure you have:
 - **Python 3.14+** (Python 3.12+ also supported)
 - **Node.js 20+** (v24 LTS recommended) and **npm 10+**
 - **Git**
@@ -112,8 +112,8 @@ Before running KIN, make sure you have:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-org/KIN.git
-cd KIN
+git clone https://github.com/KevinGeorge100/Tharavadu.git
+cd Tharavadu
 ```
 
 ### 2. Configure Environment Variables
@@ -185,12 +185,12 @@ npm run dev
 ### Mode A: Zero-External-Service Local Development (Recommended Default)
 No third-party accounts, cloud keys, or Docker containers required:
 ```env
-DATABASE_URL=sqlite:///./kin.db
+DATABASE_URL=sqlite:///./tharavadu.db
 GRAPH_BACKEND=local
 AI_PROVIDER=offline
 APP_ORIGIN=http://localhost:3000
 ```
-- **Storage:** Stored locally in a lightweight `kin.db` SQLite database.
+- **Storage:** Stored locally in a lightweight `tharavadu.db` SQLite database.
 - **AI Extraction:** Uses the built-in deterministic English grammar parser in `backend/app/ai.py`.
 
 ### Mode B: Cloud AI Extraction (OpenAI)
@@ -248,16 +248,16 @@ Family data is deeply personal. All contributors must follow these rules:
 - **Never commit `.env` or local secrets:** `.env` and `.env.local` are strictly ignored by `.gitignore`.
 - **Never commit database files:** SQLite files (`*.db`, `*.db-journal`) are strictly git-ignored.
 - **Session Tokens:** Auth tokens are hashed with SHA-256 before storage; passwords use Scrypt with unique salt.
-- **Origin & Client Validation:** Mutating endpoints require `x-kin-client: web` and a matching `Origin` header to mitigate CSRF attacks.
+- **Origin & Client Validation:** Mutating endpoints require `x-tharavadu-client: web` and a matching `Origin` header to mitigate CSRF attacks.
 
 ---
 
 ## Architectural Decisions & Governance
 
-Key architectural choices are formally documented in [`docs/adr/`](file:///c:/Projects/KIN/docs/adr):
-- **[ADR-0001: Hybrid Graph & Relational Storage](file:///c:/Projects/KIN/docs/adr/ADR-0001-hybrid-graph-relational-storage.md)** — Relational database for metadata; swappable JSON snapshot or Neo4j backend.
-- **[ADR-0002: Proposal-First AI Extraction](file:///c:/Projects/KIN/docs/adr/ADR-0002-proposal-first-ai-extraction.md)** — AI models can only stage proposals; humans approve all graph mutations.
-- **[ADR-0003: Pure Python Kinship Reasoning](file:///c:/Projects/KIN/docs/adr/ADR-0003-pure-python-deterministic-kinship-reasoning.md)** — Zero LLMs in the relationship deduction or cycle detection path.
+Key architectural choices are formally documented in [`docs/adr/`](docs/adr):
+- **[ADR-0001: Hybrid Graph & Relational Storage](docs/adr/ADR-0001-hybrid-graph-relational-storage.md)** — Relational database for metadata; swappable JSON snapshot or Neo4j backend.
+- **[ADR-0002: Proposal-First AI Extraction](docs/adr/ADR-0002-proposal-first-ai-extraction.md)** — AI models can only stage proposals; humans approve all graph mutations.
+- **[ADR-0003: Pure Python Kinship Reasoning](docs/adr/ADR-0003-pure-python-deterministic-kinship-reasoning.md)** — Zero LLMs in the relationship deduction or cycle detection path.
 
 ---
 
@@ -271,5 +271,5 @@ Key architectural choices are formally documented in [`docs/adr/`](file:///c:/Pr
 
 ## License
 
-Project KIN is open-source software released under the [MIT License](file:///c:/Projects/KIN/LICENSE).  
-Copyright (c) 2026 KIN contributors.
+Project Tharavadu is open-source software released under the [MIT License](LICENSE).  
+Copyright (c) 2026 Tharavadu contributors.

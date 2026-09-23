@@ -5,9 +5,9 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
 import { AlbumStarter } from "@/components/onboarding/album-starter";
-import { KinComposer } from "@/components/kin/kin-composer";
-import { ExtractionPreview } from "@/components/kin/extraction-preview";
-import { IdentityCollision, CollisionChoice } from "@/components/kin/identity-collision";
+import { TharavaduComposer } from "@/components/tharavadu/tharavadu-composer";
+import { ExtractionPreview } from "@/components/tharavadu/extraction-preview";
+import { IdentityCollision, CollisionChoice } from "@/components/tharavadu/identity-collision";
 import { DEMO_PROMPT_STORIES, DemoPromptStory, ExtractionCandidate } from "@/data/demo-stories";
 
 const FamilyCanvas = dynamic(
@@ -15,7 +15,7 @@ const FamilyCanvas = dynamic(
   { ssr: false }
 );
 
-function KinAppContent() {
+function TharavaduAppContent() {
   const searchParams = useSearchParams();
 
   const urlMode = searchParams.get("mode");
@@ -58,7 +58,7 @@ function KinAppContent() {
       setActiveExtraction({
         primaryName: "Spoken story",
         primaryRole: "family note",
-        relatives: [{ name: "Someone KIN heard", relation: "mentioned" }],
+        relatives: [{ name: "Someone Tharavadu heard", relation: "mentioned" }],
         peopleCount: 1,
         connectionCount: 1,
         explanation: storyText,
@@ -86,7 +86,7 @@ function KinAppContent() {
       "george-miller": "George Miller — Grandpa's brother",
       new: "Someone new",
     };
-    setCollisionNote(`${labels[choice]} noted. KIN will wait for you to confirm.`);
+    setCollisionNote(`${labels[choice]} noted. Tharavadu will wait for you to confirm.`);
     setCollisionOpen(false);
     window.setTimeout(() => setCollisionNote(null), 2400);
   };
@@ -117,10 +117,10 @@ function KinAppContent() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <BrandMark size={30} />
+          <BrandMark size={30} ariaLabel="Tharavadu logo" />
           <div>
-            <div className="kin-stamp" style={{ fontSize: "1rem", lineHeight: 1 }}>
-              KIN
+            <div className="kin-stamp" style={{ fontSize: "1rem", lineHeight: 1 }} aria-label="Tharavadu (തറവാട്)">
+              Tharavadu <span lang="ml" style={{ fontSize: "0.82rem", opacity: 0.85, fontWeight: 500, marginLeft: 4 }}>തറവാട്</span>
             </div>
             <div style={{ fontFamily: "var(--font-serif)", fontSize: "0.78rem", color: "var(--text-secondary)" }}>
               {mode === "demo" ? "Demo Family" : "New album"}
@@ -243,7 +243,7 @@ function KinAppContent() {
               zIndex: 20,
             }}
           >
-            <KinComposer onSubmitStory={handleStorySubmitted} onSelectPromptStory={handlePromptStorySelect} />
+            <TharavaduComposer onSubmitStory={handleStorySubmitted} onSelectPromptStory={handlePromptStorySelect} />
           </div>
         )}
       </main>
@@ -254,7 +254,7 @@ function KinAppContent() {
 export default function HomePage() {
   return (
     <Suspense fallback={<div style={{ width: "100vw", height: "100vh", backgroundColor: "var(--bg-canvas)" }} />}>
-      <KinAppContent />
+      <TharavaduAppContent />
     </Suspense>
   );
 }

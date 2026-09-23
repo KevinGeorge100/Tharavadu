@@ -1,6 +1,6 @@
-# KIN Product & Technical Roadmap
+# Tharavadu Product & Technical Roadmap
 
-This roadmap organizes the evolution of KIN from its current prototype state into a production-grade, AI-assisted personal genealogy workspace.
+This roadmap organizes the evolution of Tharavadu from its current prototype state into a production-grade, AI-assisted personal genealogy workspace.
 
 ---
 
@@ -8,7 +8,7 @@ This roadmap organizes the evolution of KIN from its current prototype state int
 
 ```mermaid
 timeline
-    title KIN Development Milestones
+    title Tharavadu Development Milestones
     section Stabilization
         M0 : Governance & Baseline : Ruff Fixes : Backend Unit Tests
     section Core Validation
@@ -118,7 +118,7 @@ timeline
 
 ## M4 — Production Readiness & Deployment
 
-**Goal:** Package KIN for reproducible deployment, automated CI/CD verification, and end-to-end browser testing.
+**Goal:** Package Tharavadu for reproducible deployment, automated CI/CD verification, and end-to-end browser testing.
 
 - [ ] **KIN-015 (P1): Playwright End-to-End Test Suite**
   - Automated Playwright browser tests covering authentication, graph rendering, proposal confirmation, and query inspection across Chromium, Firefox, and WebKit.

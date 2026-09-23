@@ -159,7 +159,7 @@ export function AlbumStarter({
             }}
           >
             <p className="kin-stamp" style={{ fontSize: "0.72rem" }}>
-              Or just tell KIN a story
+              Or just tell Tharavadu a story
             </p>
             <p style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", marginTop: 8 }}>
               “My mother is Anna and I have a brother called Joel.”
@@ -170,7 +170,7 @@ export function AlbumStarter({
               style={{ marginTop: 12, minHeight: 44, padding: "10px 12px" }}
               onClick={() => onTryStarterStory("My mother is Anna and I have a brother called Joel.")}
             >
-              Tell KIN →
+              Tell Tharavadu →
             </button>
           </div>
         </div>

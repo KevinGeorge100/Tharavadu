@@ -1,6 +1,6 @@
-# KIN Engineering Backlog
+# Tharavadu Engineering Backlog
 
-This backlog maintains the authoritative, prioritized registry of planned work for KIN. Every implementation task undertaken by human or AI contributors must trace directly to a backlog item in this document.
+This backlog maintains the authoritative, prioritized registry of planned work for Tharavadu. Every implementation task undertaken by human or AI contributors must trace directly to a backlog item in this document.
 
 ---
 
@@ -43,7 +43,7 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 - **Priority:** P0
 - **Status:** DONE
 - **Goal:** Author a comprehensive, deterministic unit test suite for `backend/app/domain.py`, `backend/app/schemas.py`, and `backend/app/queries.py`.
-- **Reason:** The core value of KIN is deterministic, trustworthy kinship reasoning and cycle-free graph integrity. Currently, 0 automated tests exist in the repository.
+- **Reason:** The core value of Tharavadu is deterministic, trustworthy kinship reasoning and cycle-free graph integrity. Currently, 0 automated tests exist in the repository.
 - **Dependencies:** KIN-001.
 - **Acceptance Criteria:**
   1. Create `backend/tests/` with test modules:
@@ -71,12 +71,12 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 ### KIN-004: Frontend Foundation & Family Exploration Canvas
 - **Priority:** P1
 - **Status:** REVIEW
-- **Goal:** Redesign KIN frontend as a warm, spatial family exploration canvas ("Warm Scrapbook + Family Constellation + Spatial Playground") with light-first ivory/parchment palette, conversational AI composer, and interactive constellation explorer.
-- **Reason:** Previous SaaS landing page UI failed UX review. The family universe is the home screen; users experience KIN directly without marketing cards or conventional headers/footers.
+- **Goal:** Redesign Tharavadu frontend as a warm, spatial family exploration canvas ("Warm Scrapbook + Family Constellation + Spatial Playground") with light-first ivory/parchment palette, conversational AI composer, and interactive constellation explorer.
+- **Reason:** Previous SaaS landing page UI failed UX review. The family universe is the home screen; users experience Tharavadu directly without marketing cards or conventional headers/footers.
 - **Dependencies:** None.
 - **Acceptance Criteria:**
   1. Light-first warm palette (parchment/ivory `#fbf8f2`, deep ink typography `#1e1c19`, soft pastel family branch tones).
-  2. Spatial first-run canvas ("Start with you" central node with satellite actions: Add a parent, Add a sibling, Add a partner, Tell KIN a story).
+  2. Spatial first-run canvas ("Start with you" central node with satellite actions: Add a parent, Add a sibling, Add a partner, Tell Tharavadu a story).
   3. Interactive 3-generation demo family constellation (Arthur, Eleanor, Julian, Clara, Nora, Leo, Maya) with SVG connectors and kinship path tracing.
   4. Floating conversational AI composer at the bottom with prompt chips and clearly labeled local simulation feedback pill.
   5. Warm scrapbook person card with fictional memories, direct jump relative navigation, and relationship path highlighting.
@@ -96,7 +96,7 @@ This backlog maintains the authoritative, prioritized registry of planned work f
   2. Test family multi-tenancy: verify that user A cannot view, mutate, or query user B's family.
   3. Test proposal lifecycle: submit statement to `/proposals`, verify pending status and homonym candidate extraction, confirm proposal, verify graph revision increment.
   4. Test memory CRUD: create memory linked to family members, search memories, delete memory.
-  5. Test request origin middleware: verify that mutating requests without `x-kin-client: web` or matching `Origin` return HTTP 403.
+  5. Test request origin middleware: verify that mutating requests without `x-tharavadu-client: web` or matching `Origin` return HTTP 403.
   6. All integration tests pass via `pytest`.
 
 ---

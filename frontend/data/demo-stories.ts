@@ -74,7 +74,7 @@ export const DEMO_PROMPT_STORIES: DemoPromptStory[] = [
       ],
       peopleCount: 2,
       connectionCount: 0,
-      explanation: "KIN found more than one George.",
+      explanation: "Tharavadu found more than one George.",
     },
   },
 ];

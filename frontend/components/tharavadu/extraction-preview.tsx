@@ -37,7 +37,7 @@ export function ExtractionPreview({ candidate, onAccept, onDismiss }: Extraction
     >
       <div className="tape-strip" />
       <p className="kin-stamp" style={{ fontSize: "0.92rem" }}>
-        KIN understood
+        Tharavadu understood
       </p>
 
       <div style={{ display: "flex", gap: 8, overflowX: "auto", marginTop: 12, paddingBottom: 4 }}>

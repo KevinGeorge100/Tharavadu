@@ -1,6 +1,6 @@
 # Task Execution & Scope Control Contract
 
-This document defines the contract required for initiating, executing, and completing any implementation task in KIN.
+This document defines the contract required for initiating, executing, and completing any implementation task in Tharavadu.
 
 ---
 
@@ -30,7 +30,7 @@ Before modifying source files for any backlog item, the agent must declare and a
 
 ## 2. Scope Control & Discipline
 
-AI development in KIN operates under strict scope boundaries.
+AI development in Tharavadu operates under strict scope boundaries.
 
 ### The "Discovered Issue" Protocol
 
