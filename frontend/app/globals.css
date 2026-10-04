@@ -364,6 +364,17 @@ a {
 }
 
 @media (max-width: 768px) {
+  .kin-app-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .kin-app-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
   .kin-desktop-inspector {
     display: none;
   }

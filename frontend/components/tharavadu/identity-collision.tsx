@@ -6,8 +6,10 @@ import { PersonPortrait } from "@/components/family/person-portrait";
 export type CollisionChoice = "george-davis" | "george-miller" | "new";
 
 interface IdentityCollisionProps {
-  onChoose: (choice: CollisionChoice) => void;
+  onChoose: (choice: string) => void;
   onDismiss: () => void;
+  candidateName?: string;
+  candidates?: { id: string; name: string; context: string }[];
 }
 
 const CANDIDATES: {
@@ -33,11 +35,14 @@ const CANDIDATES: {
   },
 ];
 
-export function IdentityCollision({ onChoose, onDismiss }: IdentityCollisionProps) {
+export function IdentityCollision({ onChoose, onDismiss, candidateName, candidates }: IdentityCollisionProps) {
+  const choices: { id: string; name: string; context: string; color?: string; portrait?: "silhouette-uncle" | "silhouette-father" }[] = candidates || CANDIDATES.map((person) => ({
+    id: person.id, name: person.name, context: person.relation, color: person.color, portrait: person.portrait,
+  }));
   return (
     <div
       role="dialog"
-      aria-labelledby="two-georges-title"
+      aria-labelledby="identity-collision-title"
       style={{
         width: "100%",
         maxWidth: "520px",
@@ -50,8 +55,8 @@ export function IdentityCollision({ onChoose, onDismiss }: IdentityCollisionProp
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
         <div>
-          <p id="two-georges-title" className="kin-stamp" style={{ fontSize: "1.05rem", color: "var(--ink)" }}>
-            Two Georges 👀
+          <p id="identity-collision-title" className="kin-stamp" style={{ fontSize: "1.05rem", color: "var(--ink)" }}>
+            {candidates ? `Which ${candidateName || "person"}?` : "Two Georges 👀"}
           </p>
           <p
             style={{
@@ -83,12 +88,12 @@ export function IdentityCollision({ onChoose, onDismiss }: IdentityCollisionProp
           marginTop: 14,
         }}
       >
-        {CANDIDATES.map((person) => (
+        {choices.map((person) => (
           <button
             key={person.id}
             type="button"
             onClick={() => onChoose(person.id)}
-            aria-label={`${person.name}, ${person.relation}`}
+            aria-label={`${person.name}, ${person.context}`}
             style={{
               textAlign: "left",
               background: "var(--cream-hot)",
@@ -97,11 +102,11 @@ export function IdentityCollision({ onChoose, onDismiss }: IdentityCollisionProp
               minHeight: 44,
             }}
           >
-            <PersonPortrait type={person.portrait} color={person.color} size={148} />
+            <PersonPortrait type={person.portrait || "silhouette-uncle"} color={person.color || "var(--branch-sage)"} size={148} />
             <div style={{ padding: "8px 10px 10px" }}>
               <div style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "0.95rem" }}>{person.name}</div>
-              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: person.color, marginTop: 2 }}>
-                {person.relation}
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: person.color || "var(--branch-sage)", marginTop: 2 }}>
+                {person.context}
               </div>
             </div>
           </button>

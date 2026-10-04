@@ -48,6 +48,34 @@ export interface BackendGraph {
   applied: string[];
 }
 
+export interface ExtractionEntity {
+  ref: string;
+  name: string;
+  gender: "male" | "female" | "unspecified";
+  existing_id: string | null;
+}
+
+export interface Extraction {
+  entities: ExtractionEntity[];
+  relationships: BackendEdge[];
+  warnings: string[];
+}
+
+export interface Proposal {
+  id: string;
+  family_id: string;
+  revision: number;
+  extraction: Extraction;
+  status: "pending" | "confirmed" | "rejected";
+  created: number;
+  candidates: Record<string, string[]>;
+}
+
+export interface ConfirmProposalInput {
+  extraction: Extraction;
+  resolutions: Record<string, string>;
+}
+
 export class ApiError extends Error {
   status: number;
   detail: string;

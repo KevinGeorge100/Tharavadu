@@ -42,7 +42,9 @@ export const PersonNode = memo(function PersonNode({ data }: { data: PersonNodeD
     }
   };
 
-  const datesText = member.deathYear ? `${member.birthYear}–${member.deathYear}` : `b. ${member.birthYear}`;
+  const datesText = member.birthYear && member.deathYear
+    ? `${member.birthYear}–${member.deathYear}`
+    : member.birthYear ? `b. ${member.birthYear}` : member.deathYear ? `d. ${member.deathYear}` : null;
   const compact = zoomBand === "far";
   const rich = zoomBand === "close" || isSelected;
 
@@ -52,7 +54,7 @@ export const PersonNode = memo(function PersonNode({ data }: { data: PersonNodeD
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      aria-label={`${member.name}, ${member.relationLabel}, ${datesText}`}
+      aria-label={`${member.name}, ${member.relationLabel}${datesText ? `, ${datesText}` : ""}`}
       aria-pressed={isSelected}
       className={isBlooming ? "kin-blooming-card" : undefined}
       style={{
@@ -116,7 +118,7 @@ export const PersonNode = memo(function PersonNode({ data }: { data: PersonNodeD
                 color: member.isUserAnchor ? "var(--accent-warm)" : member.branchColor,
               }}
             >
-              {member.relationLabel} · {datesText}
+              {member.relationLabel}{datesText ? ` · ${datesText}` : ""}
             </div>
           )}
 

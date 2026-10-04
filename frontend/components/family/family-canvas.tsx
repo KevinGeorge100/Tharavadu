@@ -29,6 +29,8 @@ export interface FamilyCanvasProps {
   customMembers?: FamilyMember[];
   customEdges?: CanvasEdge[];
   customPositions?: Record<string, { x: number; y: number }>;
+  bloomPersonIds?: string[];
+  bloomToken?: number;
 }
 
 const nodeTypes = {
@@ -39,6 +41,8 @@ const nodeTypes = {
 const edgeTypes = {
   kinshipEdge: KinshipRelationshipEdge,
 };
+
+const EMPTY_BLOOM_IDS: string[] = [];
 
 const POSITIONS: Record<string, { x: number; y: number }> = {
   arthur: { x: 40, y: 16 },
@@ -67,6 +71,8 @@ function FamilyCanvasInner({
   customMembers,
   customEdges,
   customPositions,
+  bloomPersonIds = EMPTY_BLOOM_IDS,
+  bloomToken = 0,
 }: FamilyCanvasProps) {
   const { fitView, zoomIn, zoomOut, setCenter, getNode } = useReactFlow();
 
@@ -165,6 +171,28 @@ function FamilyCanvasInner({
     };
   }, [isNewBranchAdded]);
 
+  useEffect(() => {
+    if (!bloomToken || bloomPersonIds.length === 0) return;
+    const start = window.setTimeout(() => {
+      setBloomLabel("NEW BRANCH 🌿");
+      setIsGrowing(true);
+    }, 0);
+    const frame = window.setTimeout(() => {
+      const branchNodes = bloomPersonIds.map((id) => getNode(id)).filter((node): node is Node => Boolean(node));
+      if (branchNodes.length) {
+        fitView({ nodes: branchNodes, padding: 0.65, duration: 550, minZoom: 0.55, maxZoom: 1.1 });
+      }
+    }, 220);
+    const finish = window.setTimeout(() => setIsGrowing(false), 950);
+    const hide = window.setTimeout(() => setBloomLabel(null), 2600);
+    return () => {
+      window.clearTimeout(start);
+      window.clearTimeout(frame);
+      window.clearTimeout(finish);
+      window.clearTimeout(hide);
+    };
+  }, [bloomToken, bloomPersonIds, fitView, getNode]);
+
   const handleMove = useCallback((_: unknown, viewport: Viewport) => {
     const next = zoomToBand(viewport.zoom);
     setZoomBand((current) => (current === next ? current : next));
@@ -205,7 +233,7 @@ function FamilyCanvasInner({
           isSelected,
           isDimmed,
           isPathHighlighted: isPathHighlight && trailReady,
-          isBlooming: isGrowing && ["joseph", "mathew", "thomas"].includes(member.id),
+          isBlooming: isGrowing && (customMembers ? bloomPersonIds.includes(member.id) : ["joseph", "mathew", "thomas"].includes(member.id)),
           zoomBand,
           onSelectPerson: handleSelectPerson,
         } as PersonNodeData,
@@ -245,6 +273,8 @@ function FamilyCanvasInner({
     memberMap,
     revealedTrailNodes,
     customPositions,
+    customMembers,
+    bloomPersonIds,
   ]);
 
   const initialEdges: Edge[] = useMemo(() => {
@@ -262,7 +292,7 @@ function FamilyCanvasInner({
             relationshipType: edge.type,
             isPathHighlighted: false,
             isSelectedConnected: Boolean(isConnected),
-            isGrowing: false,
+            isGrowing: isGrowing && (bloomPersonIds.includes(edge.source) || bloomPersonIds.includes(edge.target)),
           },
         };
       });
@@ -314,7 +344,7 @@ function FamilyCanvasInner({
         },
       };
     });
-  }, [branchAdded, activeDiscoveryPath, selectedPersonId, isGrowing, revealedTrailNodes, customEdges]);
+  }, [branchAdded, activeDiscoveryPath, selectedPersonId, isGrowing, revealedTrailNodes, customEdges, bloomPersonIds]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);

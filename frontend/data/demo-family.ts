@@ -3,7 +3,7 @@ export interface FamilyMember {
   name: string;
   relationLabel: string;
   isUserAnchor?: boolean;
-  birthYear: number;
+  birthYear?: number;
   deathYear?: number;
   generation: 1 | 2 | 3;
   branchName: string;

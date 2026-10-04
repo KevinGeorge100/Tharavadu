@@ -5,17 +5,27 @@ import { DEMO_PROMPT_STORIES, DemoPromptStory } from "@/data/demo-stories";
 
 interface TharavaduComposerProps {
   initialStory?: string | null;
-  onSubmitStory: (storyText: string) => void;
+  onSubmitStory: (storyText: string) => void | Promise<void>;
   onSelectPromptStory?: (story: DemoPromptStory) => void;
+  busy?: boolean;
+  showDemoPrompts?: boolean;
+  error?: string | null;
 }
 
-export function TharavaduComposer({ initialStory = "", onSubmitStory, onSelectPromptStory }: TharavaduComposerProps) {
+export function TharavaduComposer({
+  initialStory = "",
+  onSubmitStory,
+  onSelectPromptStory,
+  busy = false,
+  showDemoPrompts = true,
+  error,
+}: TharavaduComposerProps) {
   const [input, setInput] = useState(initialStory || "");
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || busy) return;
     onSubmitStory(trimmed);
   };
 
@@ -36,7 +46,7 @@ export function TharavaduComposer({ initialStory = "", onSubmitStory, onSelectPr
         gap: 8,
       }}
     >
-      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingInline: 2 }}>
+      {showDemoPrompts && <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingInline: 2 }}>
         {DEMO_PROMPT_STORIES.map((item) => (
           <button
             key={item.id}
@@ -57,7 +67,7 @@ export function TharavaduComposer({ initialStory = "", onSubmitStory, onSelectPr
             {item.label}
           </button>
         ))}
-      </div>
+      </div>}
 
       <form
         onSubmit={handleSubmit}
@@ -82,7 +92,9 @@ export function TharavaduComposer({ initialStory = "", onSubmitStory, onSelectPr
             id="tharavadu-story-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="My grandfather Joseph had two brothers called Mathew and Thomas."
+            disabled={busy}
+            maxLength={6000}
+            placeholder={showDemoPrompts ? "My grandfather Joseph had two brothers called Mathew and Thomas." : "My father is Joseph."}
             rows={1}
             style={{
               flex: 1,
@@ -96,10 +108,11 @@ export function TharavaduComposer({ initialStory = "", onSubmitStory, onSelectPr
               color: "var(--ink)",
             }}
           />
-          <button type="submit" disabled={!input.trim()} className="kin-press" style={{ padding: "10px 14px", minWidth: 92, minHeight: 44 }}>
-            Tell Tharavadu →
+          <button type="submit" disabled={!input.trim() || busy} className="kin-press" style={{ padding: "10px 14px", minWidth: 92, minHeight: 44 }}>
+            {busy ? "Listening…" : "Tell Tharavadu →"}
           </button>
         </div>
+        {error && <p role="alert" style={{ marginTop: 8, color: "var(--accent-warm)", fontSize: "0.78rem", fontWeight: 700 }}>{error}</p>}
       </form>
     </div>
   );

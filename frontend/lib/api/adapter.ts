@@ -204,7 +204,7 @@ export function backendGraphToCanvas(
       }
     });
 
-    const birthYear = person.birth_date ? parseInt(person.birth_date.slice(0, 4), 10) : 1975;
+    const birthYear = person.birth_date ? parseInt(person.birth_date.slice(0, 4), 10) : undefined;
     const deathYear = person.death_date ? parseInt(person.death_date.slice(0, 4), 10) : undefined;
 
     // Portrait
@@ -230,7 +230,7 @@ export function backendGraphToCanvas(
       name: person.name,
       relationLabel,
       isUserAnchor: isAnchor,
-      birthYear: isNaN(birthYear) ? 1975 : birthYear,
+      birthYear: birthYear !== undefined && Number.isFinite(birthYear) ? birthYear : undefined,
       deathYear: deathYear && !isNaN(deathYear) ? deathYear : undefined,
       generation: gen,
       branchName: `${person.name}'s Branch`,

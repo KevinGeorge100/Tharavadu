@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
 import { AlbumStarter } from "@/components/onboarding/album-starter";
 import { TharavaduComposer } from "@/components/tharavadu/tharavadu-composer";
-import { ExtractionPreview } from "@/components/tharavadu/extraction-preview";
+import { ExtractionPreview, LiveExtractionPreview } from "@/components/tharavadu/extraction-preview";
 import { IdentityCollision, CollisionChoice } from "@/components/tharavadu/identity-collision";
 import { LiveAuthDialog } from "@/components/tharavadu/live-auth-dialog";
 import { LiveFamilyDialog } from "@/components/tharavadu/live-family-dialog";
@@ -22,7 +22,23 @@ import {
   Family,
   CanvasEdge,
   ApiError,
+  BackendGraph,
+  Proposal,
+  createProposal,
+  confirmProposal,
+  deleteProposal,
 } from "@/lib/api";
+
+type ProposalPhase = "idle" | "submitting" | "ready" | "confirming" | "refreshing" | "refresh-error" | "success" | "error" | "stale";
+
+function proposalErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 401) return "Your session ended. Sign in again to continue.";
+    if (error.status === 0 || error.status >= 500) return "Tharavadu could not reach the family service. Please try again.";
+    return error.detail;
+  }
+  return "Something went wrong. Please try again.";
+}
 
 const FamilyCanvas = dynamic(
   () => import("@/components/family/family-canvas").then((mod) => mod.FamilyCanvas),
@@ -47,7 +63,7 @@ function TharavaduAppContent() {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(urlSelected || null);
   const [discoveryKey, setDiscoveryKey] = useState<string | null>(urlDiscovery || null);
   const [branchAdded, setBranchAdded] = useState(urlBranchAdded);
-  const [collisionOpen, setCollisionOpen] = useState(urlCollision);
+  const [collisionOpen, setCollisionOpen] = useState(mode === "demo" && urlCollision);
   const [collisionNote, setCollisionNote] = useState<string | null>(null);
 
   // Live backend API state
@@ -66,8 +82,17 @@ function TharavaduAppContent() {
   const [createFamilyModalOpen, setCreateFamilyModalOpen] = useState(false);
 
   const initialCandidate: ExtractionCandidate | null =
-    urlExtract === "joseph" ? DEMO_PROMPT_STORIES[0].candidate : null;
+    mode === "demo" && urlExtract === "joseph" ? DEMO_PROMPT_STORIES[0].candidate : null;
   const [activeExtraction, setActiveExtraction] = useState<ExtractionCandidate | null>(initialCandidate);
+  const [liveGraph, setLiveGraph] = useState<BackendGraph | null>(null);
+  const [pendingProposal, setPendingProposal] = useState<Proposal | null>(null);
+  const [proposalPhase, setProposalPhase] = useState<ProposalPhase>("idle");
+  const [proposalError, setProposalError] = useState<string | null>(null);
+  const [resolutions, setResolutions] = useState<Record<string, string>>({});
+  const [identityRef, setIdentityRef] = useState<string | null>(null);
+  const [bloomPersonIds, setBloomPersonIds] = useState<string[]>([]);
+  const [bloomToken, setBloomToken] = useState(0);
+  const proposalLock = useRef(false);
 
   // Load families and their graphs
   const loadFamiliesAndGraph = useCallback(async (preferFamilyId?: string) => {
@@ -81,9 +106,11 @@ function TharavaduAppContent() {
         setGraphLoading(true);
         const g = await getFamilyGraph(selected.id);
         const adapted = backendGraphToCanvas(g, selected.self_id);
+        setLiveGraph(g);
         setLiveGraphData(adapted);
       } else {
         setActiveFamily(null);
+        setLiveGraph(null);
         setLiveGraphData(null);
       }
     } catch (err: unknown) {
@@ -123,11 +150,13 @@ function TharavaduAppContent() {
     const fam = families.find((f) => f.id === familyId);
     if (!fam) return;
     setActiveFamily(fam);
+    setBloomPersonIds([]);
     setSelectedPersonId(null);
     setGraphLoading(true);
     try {
       const g = await getFamilyGraph(fam.id);
       const adapted = backendGraphToCanvas(g, fam.self_id);
+      setLiveGraph(g);
       setLiveGraphData(adapted);
     } catch (err: unknown) {
       if (err instanceof Error) setLiveError(err.message);
@@ -145,7 +174,11 @@ function TharavaduAppContent() {
     setUser(null);
     setFamilies([]);
     setActiveFamily(null);
+    setLiveGraph(null);
     setLiveGraphData(null);
+    setPendingProposal(null);
+    setProposalPhase("idle");
+    setIdentityRef(null);
   };
 
   const handleStorySubmitted = (storyText: string) => {
@@ -190,16 +223,184 @@ function TharavaduAppContent() {
     setActiveExtraction(null);
   };
 
-  const handleCollision = (choice: CollisionChoice) => {
+  const handleCollision = (choice: string) => {
     const labels: Record<CollisionChoice, string> = {
       "george-davis": "George Davis — Dad's cousin",
       "george-miller": "George Miller — Grandpa's brother",
       new: "Someone new",
     };
-    setCollisionNote(`${labels[choice]} noted. Tharavadu will wait for you to confirm.`);
+    if (!(choice in labels)) return;
+    setCollisionNote(`${labels[choice as CollisionChoice]} noted. Tharavadu will wait for you to confirm.`);
     setCollisionOpen(false);
     window.setTimeout(() => setCollisionNote(null), 2400);
   };
+
+  const clearProposal = () => {
+    setPendingProposal(null);
+    setResolutions({});
+    setIdentityRef(null);
+    setProposalError(null);
+    setProposalPhase("idle");
+  };
+
+  const handleLiveStory = async (storyText: string) => {
+    if (!activeFamily || !user || pendingProposal || proposalLock.current) return;
+    proposalLock.current = true;
+    setProposalPhase("submitting");
+    setProposalError(null);
+    try {
+      const proposal = await createProposal(activeFamily.id, storyText);
+      setPendingProposal(proposal);
+      setResolutions({});
+      setIdentityRef(Object.keys(proposal.candidates)[0] || null);
+      setProposalPhase("ready");
+    } catch (error: unknown) {
+      setProposalError(proposalErrorMessage(error));
+      setProposalPhase("error");
+      if (error instanceof ApiError && error.status === 401) {
+        setUser(null);
+        setAuthModalOpen(true);
+      }
+    } finally {
+      proposalLock.current = false;
+    }
+  };
+
+  const handleIdentityChoice = (choice: string) => {
+    if (!pendingProposal || !identityRef) return;
+    const updated = { ...resolutions, [identityRef]: choice };
+    setResolutions(updated);
+    setIdentityRef(Object.keys(pendingProposal.candidates).find((ref) => !updated[ref]) || null);
+  };
+
+  const showFreshGraph = (graph: BackendGraph, family: Family, previous: BackendGraph | null) => {
+    const existingIds = new Set(previous?.people.map((person) => person.id) || []);
+    const addedIds = graph.people.filter((person) => !existingIds.has(person.id)).map((person) => person.id);
+    setLiveGraph(graph);
+    setLiveGraphData(backendGraphToCanvas(graph, family.self_id));
+    setBloomPersonIds(addedIds);
+    if (addedIds.length > 0) setBloomToken((token) => token + 1);
+  };
+
+  const refreshConfirmedGraph = async (proposal: Proposal, previous: BackendGraph | null) => {
+    const family = activeFamily;
+    if (!family || family.id !== proposal.family_id) return;
+    const fresh = await getFamilyGraph(family.id);
+    showFreshGraph(fresh, family, previous);
+    clearProposal();
+    setProposalPhase("success");
+  };
+
+  const handleConfirmLiveProposal = async () => {
+    const proposal = pendingProposal;
+    if (!proposal || !activeFamily || !liveGraph || proposalLock.current) return;
+    if (Object.keys(proposal.candidates).some((ref) => !resolutions[ref])) return;
+    proposalLock.current = true;
+    setProposalPhase("confirming");
+    setProposalError(null);
+    try {
+      await confirmProposal(proposal.family_id, proposal.id, { extraction: proposal.extraction, resolutions });
+    } catch (error: unknown) {
+      if (error instanceof ApiError && error.status === 409 && /graph changed|reinterpr|expired|closed/i.test(error.detail)) {
+        setProposalPhase("stale");
+      } else {
+        setProposalPhase("ready");
+      }
+      setProposalError(proposalErrorMessage(error));
+      if (error instanceof ApiError && error.status === 401) {
+        setUser(null);
+        setAuthModalOpen(true);
+      }
+      proposalLock.current = false;
+      return;
+    }
+    setProposalPhase("refreshing");
+    try {
+      await refreshConfirmedGraph(proposal, liveGraph);
+    } catch (error: unknown) {
+      setProposalPhase("refresh-error");
+      setProposalError(`The story was saved, but the family view could not refresh. ${proposalErrorMessage(error)}`);
+      if (error instanceof ApiError && error.status === 401) {
+        setUser(null);
+        setAuthModalOpen(true);
+      }
+    } finally {
+      proposalLock.current = false;
+    }
+  };
+
+  const handleRetryRefresh = async () => {
+    if (!pendingProposal || proposalLock.current) return;
+    proposalLock.current = true;
+    setProposalPhase("refreshing");
+    setProposalError(null);
+    try {
+      await refreshConfirmedGraph(pendingProposal, liveGraph);
+    } catch (error: unknown) {
+      setProposalPhase("refresh-error");
+      setProposalError(proposalErrorMessage(error));
+      if (error instanceof ApiError && error.status === 401) {
+        setUser(null);
+        setAuthModalOpen(true);
+      }
+    } finally {
+      proposalLock.current = false;
+    }
+  };
+
+  const handleDiscardLiveProposal = async () => {
+    if (!pendingProposal || proposalLock.current) return;
+    proposalLock.current = true;
+    setProposalError(null);
+    try {
+      await deleteProposal(pendingProposal.family_id, pendingProposal.id);
+      clearProposal();
+    } catch (error: unknown) {
+      setProposalError(proposalErrorMessage(error));
+      if (error instanceof ApiError && error.status === 401) {
+        setUser(null);
+        setAuthModalOpen(true);
+      }
+    } finally {
+      proposalLock.current = false;
+    }
+  };
+
+  const handleStaleRefresh = async () => {
+    if (!pendingProposal || !activeFamily || proposalLock.current) return;
+    proposalLock.current = true;
+    setProposalError(null);
+    try {
+      const fresh = await getFamilyGraph(activeFamily.id);
+      setLiveGraph(fresh);
+      setLiveGraphData(backendGraphToCanvas(fresh, activeFamily.self_id));
+      await deleteProposal(pendingProposal.family_id, pendingProposal.id);
+      clearProposal();
+    } catch (error: unknown) {
+      setProposalError(proposalErrorMessage(error));
+      if (error instanceof ApiError && error.status === 401) {
+        setUser(null);
+        setAuthModalOpen(true);
+      }
+    } finally {
+      proposalLock.current = false;
+    }
+  };
+
+  const collisionCandidates = identityRef && pendingProposal && liveGraph
+    ? (pendingProposal.candidates[identityRef] || []).map((id) => {
+        const person = liveGraph.people.find((member) => member.id === id);
+        const connection = liveGraph.edges.find((edge) => edge.source === id || edge.target === id);
+        const otherId = connection?.source === id ? connection.target : connection?.source;
+        const other = liveGraph.people.find((member) => member.id === otherId);
+        const context = connection && other
+          ? connection.type === "PARENT_OF"
+            ? connection.source === id ? `Parent of ${other.name}` : `Child of ${other.name}`
+            : connection.type === "SIBLING_OF" ? `Sibling of ${other.name}` : `Spouse of ${other.name}`
+          : `Family record ${id.slice(0, 8)}`;
+        return { id, name: person?.name || "Family member", context };
+      })
+    : [];
 
   return (
     <div
@@ -217,6 +418,7 @@ function TharavaduAppContent() {
       <div className="kin-canvas-bg" />
 
       <header
+        className="kin-app-header"
         style={{
           display: "flex",
           alignItems: "center",
@@ -238,7 +440,7 @@ function TharavaduAppContent() {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <div className="kin-app-actions" style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <button
             type="button"
             className={mode === "demo" ? "kin-press" : "kin-press-ghost"}
@@ -284,6 +486,7 @@ function TharavaduAppContent() {
                 <select
                   value={activeFamily?.id || ""}
                   onChange={(e) => handleSelectFamily(e.target.value)}
+                  disabled={Boolean(pendingProposal)}
                   style={{
                     padding: "6px 8px",
                     minHeight: 38,
@@ -306,6 +509,7 @@ function TharavaduAppContent() {
                 type="button"
                 className="kin-press-ghost"
                 onClick={() => setCreateFamilyModalOpen(true)}
+                disabled={Boolean(pendingProposal)}
                 title="Create another family"
                 style={{ minHeight: 38, padding: "6px 10px", fontSize: "0.68rem" }}
               >
@@ -395,6 +599,8 @@ function TharavaduAppContent() {
                 customMembers={liveGraphData.members}
                 customEdges={liveGraphData.edges}
                 customPositions={liveGraphData.positions}
+                bloomPersonIds={bloomPersonIds}
+                bloomToken={bloomToken}
                 initialSelectedId={selectedPersonId}
                 onSelectPerson={setSelectedPersonId}
               />
@@ -503,6 +709,7 @@ function TharavaduAppContent() {
           >
             <LiveAuthDialog
               onSuccess={(authenticatedUser) => {
+                clearProposal();
                 setUser(authenticatedUser);
                 setAuthModalOpen(false);
                 loadFamiliesAndGraph();
@@ -535,7 +742,7 @@ function TharavaduAppContent() {
           </div>
         )}
 
-        {collisionOpen && (
+        {mode === "demo" && collisionOpen && (
           <div
             style={{
               position: "absolute",
@@ -554,7 +761,7 @@ function TharavaduAppContent() {
 
         {collisionNote && <div className="kin-bloom-label">{collisionNote}</div>}
 
-        {activeExtraction && (
+        {mode === "demo" && activeExtraction && (
           <div
             style={{
               position: "absolute",
@@ -571,6 +778,62 @@ function TharavaduAppContent() {
               onAccept={handleAcceptExtraction}
               onDismiss={() => setActiveExtraction(null)}
             />
+          </div>
+        )}
+
+        {mode === "live" && user && activeFamily && liveGraph && !pendingProposal && (
+          <div style={{ position: "absolute", bottom: 12, left: 12, right: 12, display: "flex", justifyContent: "center", zIndex: 20 }}>
+            <TharavaduComposer
+              key={activeFamily.id}
+              onSubmitStory={handleLiveStory}
+              busy={proposalPhase === "submitting"}
+              showDemoPrompts={false}
+              error={proposalPhase === "error" ? proposalError : null}
+            />
+          </div>
+        )}
+
+        {mode === "live" && pendingProposal && liveGraph && proposalPhase !== "stale" && proposalPhase !== "refresh-error" && (
+          <div style={{ position: "absolute", bottom: 108, left: 12, right: 12, display: "flex", justifyContent: "center", zIndex: 35 }}>
+            <LiveExtractionPreview
+              proposal={pendingProposal}
+              graph={liveGraph}
+              selfId={activeFamily?.self_id || ""}
+              resolutions={resolutions}
+              busy={proposalPhase === "confirming" || proposalPhase === "refreshing"}
+              error={proposalError}
+              onAccept={handleConfirmLiveProposal}
+              onDismiss={handleDiscardLiveProposal}
+              onChangeIdentity={setIdentityRef}
+            />
+          </div>
+        )}
+
+        {mode === "live" && pendingProposal && identityRef && proposalPhase === "ready" && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 40, background: "rgba(22, 19, 16, 0.28)" }}>
+            <IdentityCollision
+              candidateName={pendingProposal.extraction.entities.find((entity) => entity.ref === identityRef)?.name || identityRef}
+              candidates={collisionCandidates}
+              onChoose={handleIdentityChoice}
+              onDismiss={() => setIdentityRef(null)}
+            />
+          </div>
+        )}
+
+        {mode === "live" && pendingProposal && (proposalPhase === "stale" || proposalPhase === "refresh-error") && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 40, background: "rgba(22, 19, 16, 0.28)" }}>
+            <div role="alert" style={{ width: "100%", maxWidth: 480, background: "var(--cream-hot)", border: "var(--outline-heavy) solid var(--ink)", boxShadow: "var(--shadow-raised)", padding: 20 }}>
+              <p className="kin-stamp" style={{ fontSize: "1rem" }}>{proposalPhase === "stale" ? "FAMILY CHANGED" : "STORY SAVED"}</p>
+              <p style={{ fontFamily: "var(--font-serif)", marginTop: 8, lineHeight: 1.5 }}>
+                {proposalPhase === "stale"
+                  ? "Someone or something changed this family while you were reviewing the story. Refresh the family, then tell the story again."
+                  : "Your story was saved. Refresh the family view to see the persisted changes."}
+              </p>
+              {proposalError && <p style={{ fontSize: "0.76rem", marginTop: 8, color: "var(--accent-warm)" }}>{proposalError}</p>}
+              <button type="button" className="kin-press" onClick={proposalPhase === "stale" ? handleStaleRefresh : handleRetryRefresh} style={{ minHeight: 44, padding: "10px 14px", marginTop: 14 }}>
+                Refresh family →
+              </button>
+            </div>
           </div>
         )}
 

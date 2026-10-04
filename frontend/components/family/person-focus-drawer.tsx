@@ -21,7 +21,9 @@ export function PersonFocusDrawer({
   onStartDiscovery,
   onExploreBranch,
 }: PersonFocusDrawerProps) {
-  const datesText = member.deathYear ? `${member.birthYear}–${member.deathYear}` : `b. ${member.birthYear}`;
+  const datesText = member.birthYear && member.deathYear
+    ? `${member.birthYear}–${member.deathYear}`
+    : member.birthYear ? `b. ${member.birthYear}` : member.deathYear ? `d. ${member.deathYear}` : null;
 
   return (
     <div
@@ -57,7 +59,7 @@ export function PersonFocusDrawer({
             {member.name}
           </h2>
           <p style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: "0.84rem", color: "var(--text-muted)" }}>
-            {member.relationLabel} · {datesText}
+            {member.relationLabel}{datesText ? ` · ${datesText}` : ""}
           </p>
         </div>
         <button type="button" onClick={onClose} aria-label="Close details" className="kin-press-ghost" style={{ width: 44, height: 44 }}>
