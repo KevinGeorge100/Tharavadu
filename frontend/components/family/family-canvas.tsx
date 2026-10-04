@@ -11,7 +11,8 @@ import {
   Edge,
   Viewport,
 } from "@xyflow/react";
-import { INITIAL_DEMO_MEMBERS, DEMO_EXTRACTION_BRANCH, DEMO_MEMORIES } from "@/data/demo-family";
+import { INITIAL_DEMO_MEMBERS, DEMO_EXTRACTION_BRANCH, DEMO_MEMORIES, FamilyMember } from "@/data/demo-family";
+import { CanvasEdge } from "@/lib/api/adapter";
 import { DEMO_DISCOVERY_PATHS, DiscoveryPath, findDemoPath } from "@/data/demo-paths";
 import { PersonNode, PersonNodeData, ZoomBand } from "@/components/family/person-node";
 import { MemoryArtifactNode, MemoryNodeData } from "@/components/family/memory-artifact-node";
@@ -20,11 +21,14 @@ import { PersonFocusDrawer } from "@/components/family/person-focus-drawer";
 import { RelationshipPathModal } from "@/components/family/relationship-path-modal";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
-interface FamilyCanvasProps {
+export interface FamilyCanvasProps {
   initialSelectedId?: string | null;
   initialDiscoveryPathKey?: string | null;
   isNewBranchAdded?: boolean;
   onSelectPerson?: (id: string | null) => void;
+  customMembers?: FamilyMember[];
+  customEdges?: CanvasEdge[];
+  customPositions?: Record<string, { x: number; y: number }>;
 }
 
 const nodeTypes = {
@@ -60,6 +64,9 @@ function FamilyCanvasInner({
   initialDiscoveryPathKey = null,
   isNewBranchAdded = false,
   onSelectPerson: propOnSelectPerson,
+  customMembers,
+  customEdges,
+  customPositions,
 }: FamilyCanvasProps) {
   const { fitView, zoomIn, zoomOut, setCenter, getNode } = useReactFlow();
 
@@ -97,8 +104,9 @@ function FamilyCanvasInner({
   }, []);
 
   const allMembers = useMemo(() => {
+    if (customMembers) return customMembers;
     return branchAdded ? [...INITIAL_DEMO_MEMBERS, ...DEMO_EXTRACTION_BRANCH] : INITIAL_DEMO_MEMBERS;
-  }, [branchAdded]);
+  }, [branchAdded, customMembers]);
 
   const memberMap = useMemo(() => new Map(allMembers.map((m) => [m.id, m])), [allMembers]);
   const selectedMember = selectedPersonId ? memberMap.get(selectedPersonId) || null : null;
@@ -166,7 +174,7 @@ function FamilyCanvasInner({
     const nodes: Node[] = [];
 
     allMembers.forEach((member) => {
-      const pos = POSITIONS[member.id] || { x: 0, y: 0 };
+      const pos = (customPositions && customPositions[member.id]) || POSITIONS[member.id] || { x: 0, y: 0 };
       const isSelected = selectedPersonId === member.id;
       const isDirectRel = directRelativeIds.has(member.id);
       const isPathHighlight = Boolean(activeDiscoveryPath?.highlightNodeIds.includes(member.id));
@@ -236,9 +244,30 @@ function FamilyCanvasInner({
     branchExploreId,
     memberMap,
     revealedTrailNodes,
+    customPositions,
   ]);
 
   const initialEdges: Edge[] = useMemo(() => {
+    if (customEdges) {
+      return customEdges.map((edge) => {
+        const isConnected =
+          selectedPersonId && (edge.source === selectedPersonId || edge.target === selectedPersonId);
+
+        return {
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: "kinshipEdge",
+          data: {
+            relationshipType: edge.type,
+            isPathHighlighted: false,
+            isSelectedConnected: Boolean(isConnected),
+            isGrowing: false,
+          },
+        };
+      });
+    }
+
     const baseEdges: { id: string; source: string; target: string; type: "parent" | "spouse" | "sibling" }[] = [
       { id: "arthur-eleanor", source: "arthur", target: "eleanor", type: "spouse" },
       { id: "arthur-julian", source: "arthur", target: "julian", type: "parent" },
@@ -285,7 +314,7 @@ function FamilyCanvasInner({
         },
       };
     });
-  }, [branchAdded, activeDiscoveryPath, selectedPersonId, isGrowing, revealedTrailNodes]);
+  }, [branchAdded, activeDiscoveryPath, selectedPersonId, isGrowing, revealedTrailNodes, customEdges]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);

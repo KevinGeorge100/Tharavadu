@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
@@ -8,7 +8,21 @@ import { AlbumStarter } from "@/components/onboarding/album-starter";
 import { TharavaduComposer } from "@/components/tharavadu/tharavadu-composer";
 import { ExtractionPreview } from "@/components/tharavadu/extraction-preview";
 import { IdentityCollision, CollisionChoice } from "@/components/tharavadu/identity-collision";
+import { LiveAuthDialog } from "@/components/tharavadu/live-auth-dialog";
+import { LiveFamilyDialog } from "@/components/tharavadu/live-family-dialog";
 import { DEMO_PROMPT_STORIES, DemoPromptStory, ExtractionCandidate } from "@/data/demo-stories";
+import { FamilyMember } from "@/data/demo-family";
+import {
+  getMe,
+  logout,
+  listFamilies,
+  getFamilyGraph,
+  backendGraphToCanvas,
+  User,
+  Family,
+  CanvasEdge,
+  ApiError,
+} from "@/lib/api";
 
 const FamilyCanvas = dynamic(
   () => import("@/components/family/family-canvas").then((mod) => mod.FamilyCanvas),
@@ -26,7 +40,9 @@ function TharavaduAppContent() {
   const urlBranchAdded = searchParams.get("branchAdded") === "true";
   const urlCollision = searchParams.get("collision") === "true";
 
-  const [mode, setMode] = useState<"demo" | "first-run">(urlMode === "first-run" ? "first-run" : "demo");
+  const [mode, setMode] = useState<"demo" | "first-run" | "live">(
+    urlMode === "first-run" ? "first-run" : urlMode === "live" ? "live" : "demo"
+  );
   const [starterStep, setStarterStep] = useState<"empty" | "anchor">(urlStep === "anchor" ? "anchor" : "empty");
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(urlSelected || null);
   const [discoveryKey, setDiscoveryKey] = useState<string | null>(urlDiscovery || null);
@@ -34,9 +50,103 @@ function TharavaduAppContent() {
   const [collisionOpen, setCollisionOpen] = useState(urlCollision);
   const [collisionNote, setCollisionNote] = useState<string | null>(null);
 
+  // Live backend API state
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [activeFamily, setActiveFamily] = useState<Family | null>(null);
+  const [liveGraphData, setLiveGraphData] = useState<{
+    members: FamilyMember[];
+    edges: CanvasEdge[];
+    positions: Record<string, { x: number; y: number }>;
+  } | null>(null);
+  const [graphLoading, setGraphLoading] = useState(false);
+  const [, setLiveError] = useState<string | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [createFamilyModalOpen, setCreateFamilyModalOpen] = useState(false);
+
   const initialCandidate: ExtractionCandidate | null =
     urlExtract === "joseph" ? DEMO_PROMPT_STORIES[0].candidate : null;
   const [activeExtraction, setActiveExtraction] = useState<ExtractionCandidate | null>(initialCandidate);
+
+  // Load families and their graphs
+  const loadFamiliesAndGraph = useCallback(async (preferFamilyId?: string) => {
+    try {
+      setLiveError(null);
+      const fams = await listFamilies();
+      setFamilies(fams);
+      if (fams.length > 0) {
+        const selected = preferFamilyId ? fams.find((f) => f.id === preferFamilyId) || fams[0] : fams[0];
+        setActiveFamily(selected);
+        setGraphLoading(true);
+        const g = await getFamilyGraph(selected.id);
+        const adapted = backendGraphToCanvas(g, selected.self_id);
+        setLiveGraphData(adapted);
+      } else {
+        setActiveFamily(null);
+        setLiveGraphData(null);
+      }
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        setUser(null);
+      } else if (err instanceof Error) {
+        setLiveError(err.message);
+      }
+    } finally {
+      setGraphLoading(false);
+    }
+  }, []);
+
+  // Initial authentication check
+  useEffect(() => {
+    let isMounted = true;
+    getMe()
+      .then((currentUser) => {
+        if (!isMounted) return;
+        setUser(currentUser);
+        if (currentUser) {
+          loadFamiliesAndGraph();
+        }
+      })
+      .catch(() => {
+        if (isMounted) setUser(null);
+      })
+      .finally(() => {
+        if (isMounted) setAuthLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [loadFamiliesAndGraph]);
+
+  const handleSelectFamily = async (familyId: string) => {
+    const fam = families.find((f) => f.id === familyId);
+    if (!fam) return;
+    setActiveFamily(fam);
+    setSelectedPersonId(null);
+    setGraphLoading(true);
+    try {
+      const g = await getFamilyGraph(fam.id);
+      const adapted = backendGraphToCanvas(g, fam.self_id);
+      setLiveGraphData(adapted);
+    } catch (err: unknown) {
+      if (err instanceof Error) setLiveError(err.message);
+    } finally {
+      setGraphLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // Continue cleanup regardless
+    }
+    setUser(null);
+    setFamilies([]);
+    setActiveFamily(null);
+    setLiveGraphData(null);
+  };
 
   const handleStorySubmitted = (storyText: string) => {
     const lower = storyText.toLowerCase();
@@ -123,12 +233,12 @@ function TharavaduAppContent() {
               Tharavadu <span lang="ml" style={{ fontSize: "0.82rem", opacity: 0.85, fontWeight: 500, marginLeft: 4 }}>തറവാട്</span>
             </div>
             <div style={{ fontFamily: "var(--font-serif)", fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-              {mode === "demo" ? "Demo Family" : "New album"}
+              {mode === "demo" ? "Demo Family" : mode === "live" ? (activeFamily ? activeFamily.name : "Live Family") : "New album"}
             </div>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <button
             type="button"
             className={mode === "demo" ? "kin-press" : "kin-press-ghost"}
@@ -139,7 +249,22 @@ function TharavaduAppContent() {
             }}
             style={{ minHeight: 44, padding: "8px 12px", fontSize: "0.68rem" }}
           >
-            Family
+            Demo
+          </button>
+          <button
+            type="button"
+            className={mode === "live" ? "kin-press" : "kin-press-ghost"}
+            onClick={() => {
+              setMode("live");
+              setSelectedPersonId(null);
+              setDiscoveryKey(null);
+              if (!user && !authLoading) {
+                setAuthModalOpen(true);
+              }
+            }}
+            style={{ minHeight: 44, padding: "8px 12px", fontSize: "0.68rem" }}
+          >
+            Live Family
           </button>
           <button
             type="button"
@@ -152,6 +277,61 @@ function TharavaduAppContent() {
           >
             New album
           </button>
+
+          {user ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 4 }}>
+              {families.length > 1 && (
+                <select
+                  value={activeFamily?.id || ""}
+                  onChange={(e) => handleSelectFamily(e.target.value)}
+                  style={{
+                    padding: "6px 8px",
+                    minHeight: 38,
+                    background: "var(--cream-hot)",
+                    border: "var(--outline-thin) solid var(--ink)",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    color: "var(--ink)",
+                  }}
+                >
+                  {families.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <button
+                type="button"
+                className="kin-press-ghost"
+                onClick={() => setCreateFamilyModalOpen(true)}
+                title="Create another family"
+                style={{ minHeight: 38, padding: "6px 10px", fontSize: "0.68rem" }}
+              >
+                + Family
+              </button>
+              <button
+                type="button"
+                className="kin-press-ghost"
+                onClick={handleLogout}
+                style={{ minHeight: 38, padding: "6px 10px", fontSize: "0.68rem" }}
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            mode === "live" && (
+              <button
+                type="button"
+                className="kin-press"
+                onClick={() => setAuthModalOpen(true)}
+                style={{ minHeight: 38, padding: "6px 12px", fontSize: "0.68rem", marginLeft: 4 }}
+              >
+                Sign in
+              </button>
+            )
+          )}
         </div>
       </header>
 
@@ -163,6 +343,122 @@ function TharavaduAppContent() {
             isNewBranchAdded={branchAdded}
             onSelectPerson={setSelectedPersonId}
           />
+        ) : mode === "live" ? (
+          user ? (
+            families.length === 0 ? (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 20,
+                }}
+              >
+                <div
+                  style={{
+                    maxWidth: 420,
+                    width: "100%",
+                    background: "var(--cream-hot)",
+                    border: "var(--outline-heavy) solid var(--ink)",
+                    boxShadow: "var(--shadow-raised)",
+                    padding: 24,
+                    textAlign: "center",
+                  }}
+                >
+                  <p className="kin-stamp" style={{ fontSize: "1rem", color: "var(--accent-warm)" }}>
+                    No Family Connected Yet
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-serif)",
+                      fontSize: "0.95rem",
+                      color: "var(--text-secondary)",
+                      marginTop: 8,
+                    }}
+                  >
+                    Create your family graph to start recording your lineage and kinship bonds.
+                  </p>
+                  <button
+                    type="button"
+                    className="kin-press"
+                    onClick={() => setCreateFamilyModalOpen(true)}
+                    style={{ minHeight: 44, padding: "10px 16px", marginTop: 18 }}
+                  >
+                    + Create Your Family
+                  </button>
+                </div>
+              </div>
+            ) : liveGraphData ? (
+              <FamilyCanvas
+                customMembers={liveGraphData.members}
+                customEdges={liveGraphData.edges}
+                customPositions={liveGraphData.positions}
+                initialSelectedId={selectedPersonId}
+                onSelectPerson={setSelectedPersonId}
+              />
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <p className="kin-stamp" style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                  {graphLoading ? "Loading family graph..." : "Preparing canvas..."}
+                </p>
+              </div>
+            )
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 20,
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: 420,
+                  width: "100%",
+                  background: "var(--cream-hot)",
+                  border: "var(--outline-heavy) solid var(--ink)",
+                  boxShadow: "var(--shadow-raised)",
+                  padding: 24,
+                  textAlign: "center",
+                }}
+              >
+                <p className="kin-stamp" style={{ fontSize: "1rem", color: "var(--ink)" }}>
+                  Live Tharavadu Account
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontSize: "0.95rem",
+                    color: "var(--text-secondary)",
+                    marginTop: 8,
+                  }}
+                >
+                  Sign in or register to connect to your live FastAPI backend and explore your family graph.
+                </p>
+                <button
+                  type="button"
+                  className="kin-press"
+                  onClick={() => setAuthModalOpen(true)}
+                  style={{ minHeight: 44, padding: "10px 16px", marginTop: 18 }}
+                >
+                  Sign in / Register →
+                </button>
+              </div>
+            </div>
+          )
         ) : (
           <div
             style={{
@@ -188,6 +484,53 @@ function TharavaduAppContent() {
                 setMode("demo");
                 setSelectedPersonId(null);
               }}
+            />
+          </div>
+        )}
+
+        {authModalOpen && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+              zIndex: 45,
+              background: "rgba(22, 19, 16, 0.35)",
+            }}
+          >
+            <LiveAuthDialog
+              onSuccess={(authenticatedUser) => {
+                setUser(authenticatedUser);
+                setAuthModalOpen(false);
+                loadFamiliesAndGraph();
+              }}
+              onDismiss={() => setAuthModalOpen(false)}
+            />
+          </div>
+        )}
+
+        {createFamilyModalOpen && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+              zIndex: 45,
+              background: "rgba(22, 19, 16, 0.35)",
+            }}
+          >
+            <LiveFamilyDialog
+              onCreated={(newFamily) => {
+                setCreateFamilyModalOpen(false);
+                loadFamiliesAndGraph(newFamily.id);
+              }}
+              onDismiss={() => setCreateFamilyModalOpen(false)}
             />
           </div>
         )}
