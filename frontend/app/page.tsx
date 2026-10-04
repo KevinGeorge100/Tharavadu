@@ -596,9 +596,22 @@ function TharavaduAppContent() {
               </div>
             ) : liveGraphData ? (
               <FamilyCanvas
+                key={activeFamily?.id}
                 customMembers={liveGraphData.members}
                 customEdges={liveGraphData.edges}
                 customPositions={liveGraphData.positions}
+                liveFamilyId={activeFamily?.id}
+                liveGraphRevision={liveGraph?.revision}
+                onLiveGraphChanged={(graph) => {
+                  if (!activeFamily) return;
+                  setLiveGraph(graph);
+                  setLiveGraphData(backendGraphToCanvas(graph, activeFamily.self_id));
+                  setBloomPersonIds([]);
+                }}
+                onLiveAuthExpired={() => {
+                  setUser(null);
+                  setAuthModalOpen(true);
+                }}
                 bloomPersonIds={bloomPersonIds}
                 bloomToken={bloomToken}
                 initialSelectedId={selectedPersonId}

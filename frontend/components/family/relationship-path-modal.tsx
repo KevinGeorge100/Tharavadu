@@ -48,8 +48,9 @@ export function RelationshipPathModal({ path, onClose, onStepClick, onSeeWhy }: 
         className="kin-press"
         style={{ marginTop: 14, width: "100%", minHeight: 44, padding: "10px 12px" }}
         onClick={onSeeWhy}
+        disabled={path.steps.length === 0}
       >
-        See why →
+        {path.steps.length ? "See why →" : "No path recorded yet"}
       </button>
 
       <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>

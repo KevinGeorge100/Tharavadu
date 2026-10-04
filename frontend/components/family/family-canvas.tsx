@@ -19,6 +19,7 @@ import { MemoryArtifactNode, MemoryNodeData } from "@/components/family/memory-a
 import { KinshipRelationshipEdge } from "@/components/family/relationship-edge";
 import { PersonFocusDrawer } from "@/components/family/person-focus-drawer";
 import { RelationshipPathModal } from "@/components/family/relationship-path-modal";
+import { ApiError, BackendGraph, getFamilyGraph, getRelationship, RelationshipResult } from "@/lib/api";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
 export interface FamilyCanvasProps {
@@ -31,6 +32,10 @@ export interface FamilyCanvasProps {
   customPositions?: Record<string, { x: number; y: number }>;
   bloomPersonIds?: string[];
   bloomToken?: number;
+  liveFamilyId?: string;
+  liveGraphRevision?: number;
+  onLiveGraphChanged?: (graph: BackendGraph) => void;
+  onLiveAuthExpired?: () => void;
 }
 
 const nodeTypes = {
@@ -43,6 +48,60 @@ const edgeTypes = {
 };
 
 const EMPTY_BLOOM_IDS: string[] = [];
+
+function liveDiscoveryPath(
+  result: RelationshipResult,
+  sourceId: string,
+  targetId: string,
+  edges: CanvasEdge[],
+  memberMap?: Map<string, FamilyMember>
+): DiscoveryPath {
+  if (result.path.length && (result.path[0] !== sourceId || result.path.at(-1) !== targetId)) {
+    throw new Error("The family service returned a path for different people. Please try again.");
+  }
+  if (result.names.length !== result.path.length || result.steps.length !== Math.max(0, result.path.length - 1)) {
+    throw new Error("The family service returned an incomplete trail. Please try again.");
+  }
+  const fallbackSourceName = memberMap?.get(sourceId)?.name || "";
+  const fallbackTargetName = memberMap?.get(targetId)?.name || "";
+  if (result.relationship === "not connected") {
+    return {
+      sourceId,
+      sourceName: result.names[0] || fallbackSourceName,
+      targetId,
+      targetName: result.names.at(-1) || fallbackTargetName,
+      resultTitle: "Not Connected",
+      humanExplanation: result.explanation,
+      steps: [],
+      highlightNodeIds: [],
+      highlightEdgeIds: [],
+    };
+  }
+  const evidence = result.explanation.split(". ").slice(1).join(". ").replace(/\.$/, "").split("; ");
+  const pathEdges = result.path.slice(1).flatMap((personId, index) => {
+    const previousId = result.path[index];
+    const edge = edges.find((item) =>
+      (item.source === previousId && item.target === personId) ||
+      (item.source === personId && item.target === previousId)
+    );
+    return edge ? [edge.id] : [];
+  });
+  return {
+    sourceId,
+    sourceName: result.names[0] || fallbackSourceName,
+    targetId,
+    targetName: result.names.at(-1) || fallbackTargetName,
+    resultTitle: result.relationship,
+    humanExplanation: result.explanation,
+    steps: result.path.slice(1).map((personId, index) => ({
+      fromId: result.path[index],
+      toId: personId,
+      label: evidence[index] || `${result.names[index]} → ${result.names[index + 1]}`,
+    })),
+    highlightNodeIds: result.path,
+    highlightEdgeIds: pathEdges,
+  };
+}
 
 const POSITIONS: Record<string, { x: number; y: number }> = {
   arthur: { x: 40, y: 16 },
@@ -73,6 +132,10 @@ function FamilyCanvasInner({
   customPositions,
   bloomPersonIds = EMPTY_BLOOM_IDS,
   bloomToken = 0,
+  liveFamilyId,
+  liveGraphRevision,
+  onLiveGraphChanged,
+  onLiveAuthExpired,
 }: FamilyCanvasProps) {
   const { fitView, zoomIn, zoomOut, setCenter, getNode } = useReactFlow();
 
@@ -82,7 +145,8 @@ function FamilyCanvasInner({
   const [internalDiscoveryPath, setInternalDiscoveryPath] = useState<DiscoveryPath | null>(() =>
     initialDiscoveryPathKey ? DEMO_DISCOVERY_PATHS[initialDiscoveryPathKey] || null : null
   );
-  const activeDiscoveryPath = initialDiscoveryPathKey
+  const [livePath, setLivePath] = useState<DiscoveryPath | null>(null);
+  const activeDiscoveryPath = liveFamilyId ? livePath : initialDiscoveryPathKey
     ? DEMO_DISCOVERY_PATHS[initialDiscoveryPathKey] || null
     : internalDiscoveryPath;
 
@@ -92,6 +156,9 @@ function FamilyCanvasInner({
   const [isGrowing, setIsGrowing] = useState(isNewBranchAdded);
   const [zoomBand, setZoomBand] = useState<ZoomBand>("medium");
   const [trailPickerFrom, setTrailPickerFrom] = useState<string | null>(null);
+  const [trailPickerRevision, setTrailPickerRevision] = useState<number | null>(null);
+  const [trailLoading, setTrailLoading] = useState(false);
+  const [trailError, setTrailError] = useState<string | null>(null);
   const [branchExploreId, setBranchExploreId] = useState<string | null>(null);
   const [revealedTrailNodes, setRevealedTrailNodes] = useState<string[] | null>(null);
   const [replayToken, setReplayToken] = useState(0);
@@ -106,8 +173,9 @@ function FamilyCanvasInner({
   );
 
   const setActiveDiscoveryPath = useCallback((path: DiscoveryPath | null) => {
-    setInternalDiscoveryPath(path);
-  }, []);
+    if (liveFamilyId) setLivePath(path);
+    else setInternalDiscoveryPath(path);
+  }, [liveFamilyId]);
 
   const allMembers = useMemo(() => {
     if (customMembers) return customMembers;
@@ -122,25 +190,79 @@ function FamilyCanvasInner({
     return new Set(selectedMember.directConnections.map((c) => c.id));
   }, [selectedMember]);
 
-  const handleSelectPerson = useCallback(
-    (id: string | null) => {
-      if (trailPickerFrom && id && id !== trailPickerFrom) {
-        const path = findDemoPath(trailPickerFrom, id);
-        setTrailPickerFrom(null);
-        if (path) {
+  const handleSelectPerson = useCallback(async (id: string | null) => {
+    if (trailPickerFrom && id) {
+      if (id === trailPickerFrom) {
+        setTrailError("Choose someone other than the starting person.");
+        return;
+      }
+      if (liveFamilyId) {
+        if (trailLoading) return;
+        setTrailLoading(true);
+        setTrailError(null);
+        try {
+          const before = await getFamilyGraph(liveFamilyId);
+          if (trailPickerRevision !== null && before.revision !== trailPickerRevision) {
+            onLiveGraphChanged?.(before);
+            setTrailPickerFrom(null);
+            setTrailPickerRevision(null);
+            throw new Error("The family changed while you were choosing. Select a person and try again.");
+          }
+          const result = await getRelationship(liveFamilyId, trailPickerFrom, id);
+          const after = await getFamilyGraph(liveFamilyId);
+          if (after.revision !== before.revision) {
+            onLiveGraphChanged?.(after);
+            setTrailPickerFrom(null);
+            setTrailPickerRevision(null);
+            throw new Error("The family changed while tracing this connection. Select a person and try again.");
+          }
+          if (result.path.some((personId) => !memberMap.has(personId))) {
+            onLiveGraphChanged?.(after);
+            setTrailPickerFrom(null);
+            setTrailPickerRevision(null);
+            throw new Error("The family changed while tracing this connection. Select a person and try again.");
+          }
+          const path = liveDiscoveryPath(result, trailPickerFrom, id, customEdges || [], memberMap);
           setActiveDiscoveryPath(path);
           setSelectedPersonId(null);
+          setTrailPickerFrom(null);
+          setTrailPickerRevision(null);
+          setTrailError(null);
+          setBranchExploreId(null);
           return;
+        } catch (error: unknown) {
+          if (error instanceof ApiError && error.status === 401) {
+            onLiveAuthExpired?.();
+            setTrailPickerFrom(null);
+            setTrailPickerRevision(null);
+          } else if (error instanceof ApiError && (error.status === 0 || error.status >= 500)) {
+            setTrailError("The family service could not trace this connection. Please try again.");
+          } else if (error instanceof ApiError && error.status === 409) {
+            setTrailPickerFrom(null);
+            setTrailPickerRevision(null);
+            setTrailError("That person is no longer in this family. Select someone and try again.");
+          } else {
+            setTrailError(error instanceof Error ? error.message : "Could not trace this connection. Please try again.");
+          }
+        } finally {
+          setTrailLoading(false);
         }
-        setMemoryToast("This demo traces Nora → Arthur, Maya → Arthur, and Nora → Eleanor.");
-        window.setTimeout(() => setMemoryToast(null), 2800);
+        return;
       }
-      setSelectedPersonId(id);
-      setBranchExploreId(null);
-      if (activeDiscoveryPath) setActiveDiscoveryPath(null);
-    },
-    [trailPickerFrom, activeDiscoveryPath, setSelectedPersonId, setActiveDiscoveryPath]
-  );
+      const path = findDemoPath(trailPickerFrom, id);
+      setTrailPickerFrom(null);
+      if (path) {
+        setActiveDiscoveryPath(path);
+        setSelectedPersonId(null);
+        return;
+      }
+      setMemoryToast("This demo traces Nora → Arthur, Maya → Arthur, and Nora → Eleanor.");
+      window.setTimeout(() => setMemoryToast(null), 2800);
+    }
+    setSelectedPersonId(id);
+    setBranchExploreId(null);
+    if (activeDiscoveryPath) setActiveDiscoveryPath(null);
+  }, [trailPickerFrom, liveFamilyId, trailPickerRevision, trailLoading, onLiveGraphChanged, onLiveAuthExpired, customEdges, memberMap, activeDiscoveryPath, setSelectedPersonId, setActiveDiscoveryPath]);
 
   useEffect(() => {
     if (!activeDiscoveryPath) {
@@ -151,10 +273,14 @@ function FamilyCanvasInner({
     const timers = sequence.map((nodeId, index) =>
       window.setTimeout(() => {
         setRevealedTrailNodes((current) => (index === 0 ? [nodeId] : [...(current ?? []), nodeId]));
+        if (liveFamilyId) {
+          const node = getNode(nodeId);
+          if (node) setCenter(node.position.x + 84, node.position.y + 110, { zoom: 0.92, duration: 360 });
+        }
       }, 420 * index)
     );
     return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [activeDiscoveryPath, replayToken]);
+  }, [activeDiscoveryPath, replayToken, liveFamilyId, getNode, setCenter]);
 
   useEffect(() => {
     if (!isNewBranchAdded) return;
@@ -203,10 +329,12 @@ function FamilyCanvasInner({
 
     allMembers.forEach((member) => {
       const pos = (customPositions && customPositions[member.id]) || POSITIONS[member.id] || { x: 0, y: 0 };
-      const isSelected = selectedPersonId === member.id;
+      const isTrailEndpoint = Boolean(liveFamilyId && activeDiscoveryPath &&
+        (activeDiscoveryPath.sourceId === member.id || activeDiscoveryPath.targetId === member.id));
+      const isSelected = selectedPersonId === member.id || isTrailEndpoint;
       const isDirectRel = directRelativeIds.has(member.id);
       const isPathHighlight = Boolean(activeDiscoveryPath?.highlightNodeIds.includes(member.id));
-      const trailReady = !activeDiscoveryPath || Boolean(revealedTrailNodes?.includes(member.id));
+      const trailReady = !activeDiscoveryPath || isTrailEndpoint || Boolean(revealedTrailNodes?.includes(member.id));
 
       const exploreMember = branchExploreId ? memberMap.get(branchExploreId) : null;
       const inExploredBranch = exploreMember
@@ -217,6 +345,8 @@ function FamilyCanvasInner({
 
       const isDimmed = activeDiscoveryPath
         ? !isPathHighlight || !trailReady
+        : trailPickerFrom
+          ? false
         : branchExploreId
           ? !inExploredBranch
           : selectedPersonId
@@ -275,11 +405,15 @@ function FamilyCanvasInner({
     customPositions,
     customMembers,
     bloomPersonIds,
+    liveFamilyId,
+    trailPickerFrom,
   ]);
 
   const initialEdges: Edge[] = useMemo(() => {
     if (customEdges) {
       return customEdges.map((edge) => {
+        const isPath = Boolean(activeDiscoveryPath?.highlightEdgeIds.includes(edge.id));
+        const trailReady = !activeDiscoveryPath || Boolean(revealedTrailNodes?.includes(edge.source) && revealedTrailNodes?.includes(edge.target));
         const isConnected =
           selectedPersonId && (edge.source === selectedPersonId || edge.target === selectedPersonId);
 
@@ -290,8 +424,8 @@ function FamilyCanvasInner({
           type: "kinshipEdge",
           data: {
             relationshipType: edge.type,
-            isPathHighlighted: false,
-            isSelectedConnected: Boolean(isConnected),
+            isPathHighlighted: isPath && trailReady,
+            isSelectedConnected: !activeDiscoveryPath && Boolean(isConnected),
             isGrowing: isGrowing && (bloomPersonIds.includes(edge.source) || bloomPersonIds.includes(edge.target)),
           },
         };
@@ -365,17 +499,27 @@ function FamilyCanvasInner({
   }, [fitView, branchAdded]);
 
   useEffect(() => {
-    if (!selectedPersonId) return;
+    if (!selectedPersonId || trailPickerFrom) return;
     const node = getNode(selectedPersonId);
     if (!node) return;
     const timer = window.setTimeout(() => {
       setCenter(node.position.x + 84, node.position.y + 110, { zoom: 1.05, duration: 380 });
     }, 40);
     return () => window.clearTimeout(timer);
-  }, [selectedPersonId, getNode, setCenter]);
+  }, [selectedPersonId, trailPickerFrom, getNode, setCenter]);
+
+  useEffect(() => {
+    if (!liveFamilyId || !trailPickerFrom) return;
+    const timer = window.setTimeout(() => {
+      fitView({ padding: 0.16, duration: 350, minZoom: 0.25, maxZoom: 1.05 });
+    }, 100);
+    return () => window.clearTimeout(timer);
+  }, [liveFamilyId, trailPickerFrom, fitView]);
 
   const handleStartDiscovery = (sourceId: string) => {
     setTrailPickerFrom(sourceId);
+    setTrailPickerRevision(liveGraphRevision ?? null);
+    setTrailError(null);
     setActiveDiscoveryPath(null);
   };
 
@@ -385,6 +529,17 @@ function FamilyCanvasInner({
 
   const handleReplayTrail = () => {
     setReplayToken((token) => token + 1);
+  };
+
+  const handleCloseTrail = () => {
+    setActiveDiscoveryPath(null);
+    setTrailError(null);
+    setRevealedTrailNodes(null);
+  };
+
+  const handleFocusTrailPerson = (id: string) => {
+    const node = getNode(id);
+    if (node) setCenter(node.position.x + 84, node.position.y + 110, { zoom: 1.05, duration: 380 });
   };
 
   return (
@@ -398,8 +553,8 @@ function FamilyCanvasInner({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onPaneClick={() => {
+          if (trailPickerFrom || trailLoading) return;
           handleSelectPerson(null);
-          setTrailPickerFrom(null);
           setBranchExploreId(null);
         }}
         onMove={handleMove}
@@ -408,7 +563,7 @@ function FamilyCanvasInner({
         }}
         fitView
         fitViewOptions={{ padding: 0.12, minZoom: 0.55, maxZoom: 1.15 }}
-        minZoom={0.42}
+        minZoom={liveFamilyId ? 0.25 : 0.42}
         maxZoom={1.7}
         nodesDraggable={false}
         nodesConnectable={false}
@@ -443,7 +598,7 @@ function FamilyCanvasInner({
         </div>
       )}
 
-      {trailPickerFrom && (
+      {(trailPickerFrom || trailError) && (
         <div
           className="kin-stamp"
           style={{
@@ -455,11 +610,18 @@ function FamilyCanvasInner({
             border: "var(--outline-heavy) solid var(--ink)",
             boxShadow: "var(--shadow-rest)",
             padding: "10px 14px",
-            maxWidth: 280,
+            maxWidth: 320,
             fontSize: "0.72rem",
           }}
         >
-          Choose a second person to see the connection.
+          {trailPickerFrom && <p>{trailLoading ? "Tracing this connection…" : `CONNECT ${memberMap.get(trailPickerFrom)?.name || "PERSON"} TO… Choose another person.`}</p>}
+          {trailError && <p role="alert" style={{ marginTop: trailPickerFrom ? 8 : 0, color: "var(--accent-warm)" }}>{trailError}</p>}
+          {trailPickerFrom && <button type="button" className="kin-press-ghost" disabled={trailLoading} onClick={() => {
+            setTrailPickerFrom(null);
+            setTrailPickerRevision(null);
+            setTrailError(null);
+            setActiveDiscoveryPath(null);
+          }} style={{ minHeight: 36, padding: "6px 10px", marginTop: 8 }}>Cancel connection</button>}
         </div>
       )}
 
@@ -541,8 +703,8 @@ function FamilyCanvasInner({
         >
           <RelationshipPathModal
             path={activeDiscoveryPath}
-            onClose={() => setActiveDiscoveryPath(null)}
-            onStepClick={handleSelectPerson}
+            onClose={handleCloseTrail}
+            onStepClick={liveFamilyId ? handleFocusTrailPerson : handleSelectPerson}
             onSeeWhy={handleReplayTrail}
           />
         </div>

@@ -48,6 +48,14 @@ export interface BackendGraph {
   applied: string[];
 }
 
+export interface RelationshipResult {
+  relationship: string;
+  path: string[];
+  names: string[];
+  steps: ("U" | "D" | "S" | "W")[];
+  explanation: string;
+}
+
 export interface ExtractionEntity {
   ref: string;
   name: string;
