@@ -55,7 +55,8 @@ Genealogy software is often clunky, corporate, or overly academic. Tharavadu tre
 | :--- | :--- | :--- |
 | **Domain Logic** | **100% Tested** | 88 automated pytest unit tests covering cycle checks, homonym disambiguation, cousin math, queries, and schemas. |
 | **Backend Service** | **Functional Prototype** | FastAPI app with session auth, SQLite/Neo4j graph repositories, memory journal, and REST API. |
-| **Frontend UI** | **Skeleton (In Progress)** | Next.js 16 + React 19 build workspace. The visual App Router UI is scheduled for scaffolding in **KIN-004**. |
+| **Frontend UI** | **Spatial canvas prototype** | Next.js 16 + React 19 family exploration canvas from **KIN-004**; backend connection is future work. |
+| **Backend API Tests** | **103 passing** | 88 domain tests and 15 local HTTP integration tests in **THAR-005**. |
 
 ---
 
@@ -176,7 +177,7 @@ npm run dev
 ```
 - Web Application: [http://localhost:3000](http://localhost:3000)
 
-*(Note: Until KIN-004 is completed, the frontend directory contains configuration and dependencies. The App Router shell is scheduled for implementation in KIN-004.)*
+The KIN-004 canvas is a visual prototype. API integration into the frontend is a later task.
 
 ---
 
@@ -214,14 +215,14 @@ NEO4J_PASSWORD=secret
 
 ## Running Quality Checks & Tests
 
-### Backend Unit Tests (Pytest)
-Run the 88 deterministic domain and kinship regression tests:
+### Backend Tests (Pytest)
+Run the 88 deterministic domain tests and 15 HTTP API integration tests:
 ```powershell
 # Windows PowerShell
-.\.venv\Scripts\pytest.exe
+.\.venv\Scripts\python.exe -m pytest backend/tests -q
 
 # Linux / macOS
-pytest
+python -m pytest backend/tests -q
 ```
 
 ### Code Formatting & Linting (Ruff)
@@ -264,8 +265,8 @@ Key architectural choices are formally documented in [`docs/adr/`](docs/adr):
 ## Work in Progress & Roadmap
 
 - **Completed:** M0 Stabilization (KIN-001 Lint Baseline, KIN-002 Domain Unit Tests, KIN-003 Environment & Setup).
-- **Next Up:** **KIN-004** — Next.js App Router visual foundation and modern dark-mode design system.
-- **Following:** **KIN-005** — FastAPI integration test suite with `httpx.ASGITransport`.
+- **Awaiting review:** **KIN-004** frontend foundation and stacked **THAR-005** FastAPI integration tests.
+- **Next:** Frontend/backend integration remains a separate task.
 
 ---
 

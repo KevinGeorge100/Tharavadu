@@ -148,10 +148,10 @@ sequenceDiagram
 
 ### Known Architectural Limitations (Current)
 
-1. **No Frontend Application Code:** Next.js application pages, layout, and visual components do not yet exist on disk.
+1. **Frontend API Connection Pending:** KIN-004 established the visual canvas; live backend data and interactive graph integration remain separate work.
 2. **In-Memory Rate Limiting:** Rate limiter is confined to a local dictionary; restarts or multi-worker deployments bypass limits.
 3. **Full-Graph Neo4j Replacement:** `Neo4jGraphRepository` deletes and recreates all family nodes and edges on each revision. While safe for the 500-node MVP boundary, it is not scalable to larger enterprise graphs.
-4. **Lack of Automated Test Coverage:** Zero automated tests exist for domain logic or API endpoints.
+4. **Automated Coverage Boundaries:** Domain logic has 88 unit tests and THAR-005 exercises local FastAPI HTTP flows with isolated SQLite. Live Neo4j/PostgreSQL and browser E2E remain untested.
 
 ---
 
@@ -203,8 +203,8 @@ flowchart TD
    - Visual disambiguation modal for homonyms and unresolved entities.
    - Natural language query bar with path highlighting on the family tree canvas.
 2. **Testing Infrastructure:**
-   - Unit test suite (`pytest`) covering 100% of `domain.py`, `schemas.py`, and `queries.py`.
-   - API integration test suite (`pytest` + `httpx.ASGITransport`) testing auth, family scoping, and proposal lifecycles.
+   - Extend deterministic domain, schema, and query unit coverage as those modules evolve.
+   - Expand THAR-005's local API integration suite to external-service and browser E2E coverage in separate milestones.
    - Playwright end-to-end browser suite validating desktop, tablet, and mobile workflows.
 3. **Database Migration Tooling:**
    - Alembic migrations for PostgreSQL schema evolution.

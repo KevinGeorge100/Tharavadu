@@ -52,16 +52,12 @@ timeline
 
 **Goal:** Validate all FastAPI endpoints via automated integration tests and establish the Next.js frontend scaffolding.
 
-- [ ] **KIN-004 (P0): FastAPI Integration Test Suite**
-  - Author API test suite using `pytest` + `httpx.ASGITransport` against an in-memory or temporary SQLite database.
-  - Validate authentication flows (register, login, logout, invalid passwords, rate-limiting).
-  - Validate family scoping and tenant boundary enforcement (reject accessing foreign family ID).
-  - Validate proposal creation, ambiguous homonym returns, and confirmation lifecycle.
-  - Validate memory CRUD operations and natural language query endpoints.
-- [ ] **KIN-005 (P0): Frontend Next.js Foundation & Scaffolding**
-  - Initialize the Next.js App Router structure in `frontend/` (`app/layout.tsx`, `app/page.tsx`, `app/globals.css`).
-  - Configure CSS / styling tokens (clean dark mode palette, modern typography, glassmorphism accents).
-  - Verify that `npm run build` (`next build`), `npm run lint`, and `npm run typecheck` all pass cleanly.
+- [x] **KIN-004 (P0): Frontend Foundation & Family Exploration Canvas** — implemented on its task branch; awaiting review and merge.
+  - Established the Next.js App Router shell and warm spatial family exploration canvas.
+  - Verified frontend typecheck, lint, and build on the KIN-004 branch.
+- [x] **THAR-005 (P0): FastAPI API Integration Test Suite** — implemented on a branch stacked on KIN-004; awaiting review and merge.
+  - Exercise auth, family isolation, proposal review, homonym resolution, graph invariants, stale revisions, relationship evidence, and memories through `httpx.ASGITransport`.
+  - Use an isolated SQLite database and offline extraction for each test; no external services.
 - [ ] **KIN-006 (P1): Offline NLP Extraction Test Suite**
   - Comprehensive unit testing for `OfflineProvider` regex grammar patterns.
   - Boundary test failure cases (rejecting unconsumed text, missing names).

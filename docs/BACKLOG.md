@@ -85,10 +85,10 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 
 ---
 
-### KIN-005: FastAPI End-to-End API Integration Test Suite
+### THAR-005: FastAPI API Integration Test Suite
 - **Priority:** P1
-- **Status:** READY
-- **Goal:** Author integration tests using `pytest` and `httpx.ASGITransport` covering all FastAPI endpoints.
+- **Status:** REVIEW (stacked on KIN-004)
+- **Goal:** Test the FastAPI HTTP flows using `pytest`, `httpx.ASGITransport`, and isolated temporary SQLite databases.
 - **Reason:** Ensure authentication, authorization boundaries, rate limiting, and proposal lifecycles operate correctly without relying on manual API testing.
 - **Dependencies:** KIN-001, KIN-002.
 - **Acceptance Criteria:**
@@ -97,7 +97,8 @@ This backlog maintains the authoritative, prioritized registry of planned work f
   3. Test proposal lifecycle: submit statement to `/proposals`, verify pending status and homonym candidate extraction, confirm proposal, verify graph revision increment.
   4. Test memory CRUD: create memory linked to family members, search memories, delete memory.
   5. Test request origin middleware: verify that mutating requests without `x-tharavadu-client: web` or matching `Origin` return HTTP 403.
-  6. All integration tests pass via `pytest`.
+  6. Test graph invariants, optimistic concurrency, proposal rejection, and deterministic relationship evidence.
+  7. Full backend suite and Ruff pass without external services.
 
 ---
 
@@ -106,7 +107,7 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 - **Status:** BACKLOG
 - **Goal:** Implement an interactive genealogical tree canvas using `@xyflow/react` and `@dagrejs/dagre`.
 - **Reason:** Users require a visual, interactive representation of their family relationships with automatic hierarchical layout.
-- **Dependencies:** KIN-004, KIN-005.
+- **Dependencies:** KIN-004, THAR-005.
 - **Acceptance Criteria:**
   1. Component fetches `/api/families/{id}/graph` and computes hierarchical layout via `@dagrejs/dagre`.
   2. Custom person nodes display name, gender avatar/badge, birth/death years, and selection state.
@@ -162,7 +163,7 @@ This backlog maintains the authoritative, prioritized registry of planned work f
 - **Status:** BACKLOG
 - **Goal:** Replace the in-memory rate limiting dictionary with persistent storage and implement scheduled expired session cleanup.
 - **Reason:** Mitigates identified security risk SEC-01 and SEC-02 for multi-worker production deployments.
-- **Dependencies:** KIN-005.
+- **Dependencies:** THAR-005.
 - **Acceptance Criteria:**
   1. Implement token bucket or database-backed rate limiting.
   2. Implement an automated background task or SQL trigger to delete expired session tokens.

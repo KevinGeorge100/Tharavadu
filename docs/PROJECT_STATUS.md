@@ -1,8 +1,8 @@
 # Tharavadu — Project Status & Reality Assessment
 
-**Status as of:** September 2026  
-**Engineering Baseline Assessment:** Initial Audit & Governance Bootstrap  
-**Classification:** FUNCTIONAL PROTOTYPE (Backend Only) / SKELETON (Frontend)
+**Status as of:** October 2026
+**Engineering Baseline Assessment:** KIN-004 frontend and stacked THAR-005 backend API tests awaiting review
+**Classification:** FUNCTIONAL PROTOTYPE (Backend) / PROTOTYPE SPATIAL CANVAS (Frontend)
 
 ---
 
@@ -13,7 +13,7 @@ Tharavadu is an AI-assisted personal genealogy and kinship reasoning system desi
 The repository currently exhibits a significant asymmetry:
 - **Backend (`backend/app/`):** Contains a tightly scoped, functioning prototype implementation of deterministic kinship reasoning (`domain.py`, `queries.py`), schema validation (`schemas.py`), dual AI extraction providers (`ai.py` supporting offline regex and OpenAI structured outputs), dual graph backends (`database.py` supporting SQLite snapshot and Neo4j atomic graph replacement), and session-based FastAPI endpoints (`main.py`).
 - **Frontend (`frontend/`):** Next.js App Router spatial canvas established (`app/layout.tsx`, `app/page.tsx`, `app/globals.css`, `components/family-canvas.tsx`, `components/person-node.tsx`, `components/person-card.tsx`, `components/tharavadu/tharavadu-composer.tsx`, `data/demo-family.ts`). Light-first warm scrapbook palette, conversational AI composer, and 3-generation constellation explorer. `next build`, `npm run lint`, and `npm run typecheck` all pass with 0 errors.
-- **Testing & Quality Assurance:** Deterministic domain unit test suite established (88 tests in `backend/tests/`, 100% passing). API integration tests and Playwright E2E tests are scheduled for subsequent milestones.
+- **Testing & Quality Assurance:** 88 deterministic unit tests plus HTTP integration tests in `backend/tests/`. The HTTP tests use an isolated temporary SQLite database per case and the offline extractor. Neo4j/PostgreSQL integration and Playwright E2E remain future work.
 - **Git State:** Newly initialized Git repository with active development branches off `main`.
 
 ---
@@ -27,7 +27,7 @@ The repository currently exhibits a significant asymmetry:
 | **AI Integration** | **PARTIALLY IMPLEMENTED / PROPOSAL-ONLY** | Dual extraction paths exist (offline regex and OpenAI structured outputs). Both produce `Extraction` proposals; direct write access to the graph is prohibited by design. |
 | **Persistence** | **FUNCTIONAL PROTOTYPE (Local) / UNVERIFIED (Neo4j/Postgres)** | SQLite schema initialization and local snapshot storage work; Neo4j repository code exists but lacks integration test coverage. |
 | **Frontend UI** | **FUNCTIONAL SPATIAL CANVAS** | Spatial App Router canvas with light-first warm scrapbook design tokens, first-run "Start with you" prompt, interactive fictional constellation demo, and floating AI composer. Full React Flow canvas scheduled for KIN-006. |
-| **Automated Testing** | **FUNCTIONAL PROTOTYPE (Backend Domain)** | 88 pytest unit tests pass covering validation, cycle detection, kinship classification, queries, and schemas. E2E tests unconfigured. |
+| **Automated Testing** | **BACKEND HTTP FLOWS TESTED** | 88 domain tests and THAR-005 HTTP integration tests cover local API behavior. E2E and live external database tests remain unconfigured. |
 
 ---
 
@@ -37,18 +37,18 @@ The following matrix distinguishes between code existence, automated testing, in
 
 | Capability | Status | Implementation File(s) | Verification Level | Notes & Blockers |
 | :--- | :--- | :--- | :--- | :--- |
-| **User Authentication & Session Management** | IMPLEMENTED (Unverified) | `backend/app/main.py`<br>`backend/app/database.py` | Code Exists | Scrypt password hashing with salt; HttpOnly session cookies; stored in SQL table. Lacks automated tests. |
-| **Family Workspace Scoping & Authorization** | IMPLEMENTED (Unverified) | `backend/app/main.py` | Code Exists | Multi-tenant isolation verified by `family_access` dependency checking `owner == user_id`. |
+| **User Authentication & Session Management** | IMPLEMENTED (HTTP Tested) | `backend/app/main.py`<br>`backend/app/database.py` | THAR-005 Integration Tests | Registration, login, invalid credentials, logout, cookie session and rate limiting. |
+| **Family Workspace Scoping & Authorization** | IMPLEMENTED (HTTP Tested) | `backend/app/main.py` | THAR-005 Integration Tests | A second user cannot access the first user's graph, proposals, queries, or memories. |
 | **Kinship Traversal & Classification** | IMPLEMENTED (Unit Tested) | `backend/app/domain.py` | Automated Unit Tests | Pure Python deterministic BFS with degree/removed cousin calculations, in-laws, and ancestors. Verified by 88 tests. |
 | **Ancestry Cycle & Sibling Invariant Checks** | IMPLEMENTED (Unit Tested) | `backend/app/domain.py` | Automated Unit Tests | Detects self-ancestry cycles and sibling-as-ancestor contradictions via DFS/BFS validation. |
 | **Offline NLP Extraction** | IMPLEMENTED (Unverified) | `backend/app/ai.py` | Code Exists | Regex-based parser for basic English statements. Fails closed with `ProviderError` for unsupported syntax. |
 | **OpenAI Structured Extraction** | IMPLEMENTED (Unverified) | `backend/app/ai.py` | Code Exists | Uses `client.responses.parse` with strict Extraction schema. Requires `OPENAI_API_KEY`. Unverified against live API. |
 | **Identity Resolution & Disambiguation** | IMPLEMENTED (Unit Tested) | `backend/app/domain.py`<br>`backend/app/main.py` | Automated Unit Tests | Flags homonyms as candidate choices; requires human resolution before confirming proposal. Tested against silent merges. |
-| **Proposal Review & Application Lifecycle** | IMPLEMENTED (Unverified) | `backend/app/main.py` | Code Exists | Proposals staged in SQL; applied atomically to graph with revision tracking and idempotency checks. |
+| **Proposal Review & Application Lifecycle** | IMPLEMENTED (HTTP Tested Locally) | `backend/app/main.py` | THAR-005 Integration Tests | Staging, confirmation, homonym choices, cycle rejection, stale revisions and rejection are covered with SQLite/local graph. |
 | **Kinship Natural Language Query Engine** | IMPLEMENTED (Unit Tested) | `backend/app/queries.py` | Automated Unit Tests | Handles structured questions ("Who is X to Y", "Show my cousins", descendants). Tested in test_queries.py. |
-| **Family Memory Journal** | IMPLEMENTED (Unverified) | `backend/app/main.py`<br>`backend/app/database.py` | Code Exists | CRUD operations for family stories linked to graph person IDs. Case-insensitive substring query. |
+| **Family Memory Journal** | IMPLEMENTED (HTTP Tested Locally) | `backend/app/main.py`<br>`backend/app/database.py` | THAR-005 Integration Tests | Create, list, search, delete, and cross-family denial are covered. |
 | **Demo Family Seed Generation** | IMPLEMENTED (Unverified) | `backend/app/seed.py` | Code Exists | Generates 8-person fictional family (George, Anna, Joseph, Leena, etc.). |
-| **Local Graph Snapshot Storage** | IMPLEMENTED (Unverified) | `backend/app/database.py` | Code Exists | Stores serialized JSON graph snapshot in `local_graphs` SQL table with optimistic revision check. |
+| **Local Graph Snapshot Storage** | IMPLEMENTED (HTTP Tested) | `backend/app/database.py` | THAR-005 Integration Tests | Persisted graph reload and revision rejection are covered. |
 | **Neo4j Graph Repository** | IMPLEMENTED (Unverified) | `backend/app/database.py` | Code Exists | Full atomic graph replacement using Neo4j write transaction and family root locking. Untested against live Neo4j. |
 | **Frontend Web Workspace & UI** | IMPLEMENTED (Spatial Canvas & Demo) | `frontend/app/`<br>`frontend/components/`<br>`frontend/data/` | Code Exists & Builds | Spatial App Router canvas, warm light-first tokens, first-run "Start with you" canvas, floating conversational AI composer, and 3-generation interactive constellation demo. `next build` passes. |
 | **Frontend Interactive Graph Visualization** | PLANNED | `frontend/package.json` | Dependencies Only | `@xyflow/react` and `@dagrejs/dagre` installed; full interactive canvas scheduled for KIN-007. |
@@ -63,7 +63,7 @@ The following matrix distinguishes between code existence, automated testing, in
 | Tool / Check | Command Executed | Result | Exit Code | Details |
 | :--- | :--- | :--- | :--- | :--- |
 | **Backend Import** | `python -c "import app.main"` | **PASS** | 0 | All Python modules compile and initialize FastAPI app without runtime errors. |
-| **Backend Unit Tests** | `pytest` | **PASS** | 0 | 88 items collected, 88 passed across domain, kinship, query, and schema test modules. |
+| **Backend Suite** | `pytest backend/tests -q` | **PASS** | 0 | 103 passed: 88 domain/unit tests plus 15 THAR-005 HTTP integration tests. |
 | **Backend Lint** | `ruff check backend` | **PASS** | 0 | All checks passed with zero errors/warnings (configured via pyproject.toml). |
 | **Backend Typecheck** | `mypy` / `pyright` | **NOT CONFIGURED** | N/A | No typechecker configuration or dependency installed. |
 | **Frontend Typecheck** | `npm run typecheck` (`tsc --noEmit`) | **PASS** | 0 | TypeScript strict check passed with 0 errors. |
@@ -86,7 +86,7 @@ The following matrix distinguishes between code existence, automated testing, in
 
 ## 6. Technical Debt Register
 
-1. **Test Infrastructure [RESOLVED for Domain in KIN-002]:** Established 88 unit tests in `backend/tests/` covering domain logic, kinship classifications, queries, and schemas. API integration tests remain for KIN-005.
+1. **Test Infrastructure [RESOLVED for Domain in KIN-002; HTTP API in THAR-005]:** The 88 domain tests and isolated HTTP API integration suite cover the local backend. Live Neo4j/PostgreSQL and browser E2E tests remain separate work.
 2. **Frontend Foundation [RESOLVED in KIN-004]:** Scaffolded Next.js App Router, warm constellation design system, and interactive fictional preview. Production React Flow interactive canvas scheduled for KIN-007.
 3. **Lint Configuration Gap [RESOLVED in KIN-001]:** Configured `extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]` in `pyproject.toml` and migrated regex aliases to `re.IGNORECASE`.
 4. **Graph Replacement Strategy in Neo4j:** `Neo4jGraphRepository.save()` executes a full `MATCH (p:Person) DETACH DELETE p` and reconstructs all nodes and edges per commit. While capped at 500 nodes for MVP, this approach creates large write transactions and churn in Neo4j transaction logs.
