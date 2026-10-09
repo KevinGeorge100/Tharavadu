@@ -5,4 +5,5 @@ export * from "./families";
 export * from "./proposals";
 export * from "./relationships";
 export * from "./memories";
+export * from "./corrections";
 export * from "./adapter";

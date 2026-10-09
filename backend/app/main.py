@@ -221,6 +221,14 @@ def create_app(config: Settings = settings, provider=None):
         graph.edges = [e for e in graph.edges if not (e.source == source and e.target == target and e.type == kind)]
         return graph_repo.save(family["id"], graph, revision)
 
+    @app.delete("/api/families/{family_id}/people/{person_id}")
+    def remove_person(person_id: str, revision: int, family=Depends(family_access)):
+        if person_id == family["self_id"]:
+            raise Conflict("The family anchor cannot be removed. You can edit their details.")
+        if not isinstance(graph_repo, LocalGraphRepository):
+            raise HTTPException(501, "Person removal requires local graph mode so graph and memory updates are atomic.")
+        return graph_repo.remove_person(family["id"], person_id, revision)
+
     @app.get("/api/families/{family_id}/relationship")
     def get_relationship(source: str, target: str, family=Depends(family_access)):
         return relationship(graph_repo.read(family["id"]), source, target)
@@ -236,11 +244,15 @@ def create_app(config: Settings = settings, provider=None):
 
     @app.post("/api/families/{family_id}/memories", status_code=201)
     def add_memory(body: MemoryCreate, family=Depends(family_access)):
-        ids = {p.id for p in graph_repo.read(family["id"]).people}
+        graph = graph_repo.read(family["id"])
+        ids = {p.id for p in graph.people}
         if not set(body.people) <= ids:
             raise Conflict("Memory references a person outside this family")
         memory = {"id": uid(), "family_id": family["id"], "author": family["owner"], "text": body.text, "people": body.people, "created": time.time()}
-        db.execute(memories.insert().values(**memory))
+        if isinstance(graph_repo, LocalGraphRepository):
+            graph_repo.add_memory(memory, graph.revision)
+        else:
+            db.execute(memories.insert().values(**memory))
         return memory
 
     @app.delete("/api/families/{family_id}/memories/{memory_id}")

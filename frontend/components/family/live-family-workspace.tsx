@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ApiError, createMemory, deleteMemory, FamilyMemory, listMemories } from "@/lib/api";
+import { ApiError, BackendGraph, createMemory, deleteMemory, FamilyMemory, getFamilyGraph, listMemories } from "@/lib/api";
 import { FamilyCanvas, FamilyCanvasProps } from "./family-canvas";
 import { HeirloomDialog } from "./heirloom-dialog";
+import { PersonCorrections } from "./person-corrections";
 
-export function LiveFamilyWorkspace(props: FamilyCanvasProps & { liveFamilyId: string }) {
+export function LiveFamilyWorkspace(props: FamilyCanvasProps & { liveFamilyId: string; graph: BackendGraph; selfId: string }) {
   const { liveFamilyId, onLiveAuthExpired } = props;
   const [memories, setMemories] = useState<FamilyMemory[]>([]);
   const [personId, setPersonId] = useState<string | null>(null);
+  const [journalOpen, setJournalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,15 +37,15 @@ export function LiveFamilyWorkspace(props: FamilyCanvasProps & { liveFamilyId: s
     ...member, memoriesCount: memories.filter((memory) => memory.people.includes(member.id)).length,
   })), [props.customMembers, memories]);
   const person = members?.find((member) => member.id === personId);
-  const openJournal = (id: string) => { setPersonId(id); setText(""); setError(null); setRemoving(null); };
+  const openJournal = (id: string | null) => { setPersonId(id); setJournalOpen(true); setText(""); setError(null); setRemoving(null); };
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!personId || !text.trim() || busy) return;
+    if (!text.trim() || busy) return;
     setBusy(true); setError(null);
     try {
-      await createMemory(liveFamilyId, text.trim(), [personId]);
+      await createMemory(liveFamilyId, text.trim(), personId ? [personId] : []);
       setMemories(await listMemories(liveFamilyId));
-      setText(""); setPersonId(null); setNotice("MEMORY KEPT ✦");
+      setText(""); setJournalOpen(false); setNotice("MEMORY KEPT ✦");
     } catch (error) { reportError(error); }
     finally { setBusy(false); }
   };
@@ -56,11 +59,21 @@ export function LiveFamilyWorkspace(props: FamilyCanvasProps & { liveFamilyId: s
     } catch (error) { reportError(error); }
     finally { setBusy(false); }
   };
+  const afterCorrection = async () => {
+    const graph = await getFamilyGraph(liveFamilyId);
+    props.onLiveGraphChanged?.(graph);
+    setMemories(await listMemories(liveFamilyId));
+    if (!graph.people.some((person) => person.id === props.initialSelectedId)) props.onSelectPerson?.(null);
+  };
+  const editingPerson = props.graph.people.find((person) => person.id === editingId);
+  const visibleMemories = personId ? memories.filter((memory) => memory.people.includes(personId)) : memories;
   return <>
-    <FamilyCanvas {...props} customMembers={members} liveMemories={memories} onOpenMemories={openJournal} />
+    <FamilyCanvas {...props} customMembers={members} liveMemories={memories} onOpenMemories={openJournal} onEditPerson={setEditingId} />
+    <button className="kin-press-ghost" style={{position:"absolute",top:16,left:16,zIndex:20,padding:10,minHeight:44}} onClick={() => openJournal(null)}>Family journal</button>
     {notice && <div className="kin-bloom-label" role="status">{notice}</div>}
-    {error && !person && <div className="kin-bloom-label" role="alert">{error}</div>}
-    {person && <HeirloomDialog title={`Memories of ${person.name}`} busy={busy} onClose={() => setPersonId(null)}>
+    {error && !journalOpen && <div className="kin-bloom-label" role="alert">{error}</div>}
+    {editingPerson && <PersonCorrections person={editingPerson} graph={props.graph} familyId={liveFamilyId} selfId={props.selfId} onChanged={afterCorrection} onClose={() => setEditingId(null)} onAuthExpired={onLiveAuthExpired} />}
+    {journalOpen && <HeirloomDialog title={person ? `Memories of ${person.name}` : "Family journal"} busy={busy} onClose={() => setJournalOpen(false)}>
       {error && <p role="alert">{error}</p>}
       {removing ? <>
         <h3 className="kin-stamp">REMOVE THIS MEMORY?</h3>
@@ -76,11 +89,12 @@ export function LiveFamilyWorkspace(props: FamilyCanvasProps & { liveFamilyId: s
           <button className="kin-press" disabled={busy || !text.trim()}>{busy ? "Keeping…" : "Keep memory ✦"}</button>
         </form>
         <div className="kin-memory-list">
-          {memories.filter((memory) => memory.people.includes(person.id)).map((memory) => <article key={memory.id}>
+          {visibleMemories.map((memory) => <article key={memory.id}>
+            {!personId && <small>{memory.people.map((id) => props.graph.people.find((person) => person.id === id)?.name).filter(Boolean).join(", ") || "Family memory"}</small>}
             <p>{memory.text}</p>
             <button className="kin-press-ghost" onClick={() => setRemoving(memory)}>Remove this memory</button>
           </article>)}
-          {!memories.some((memory) => memory.people.includes(person.id)) && <p>No memories kept yet. Start with a moment you remember.</p>}
+          {!visibleMemories.length && <p>No memories kept yet. Start with a moment you remember.</p>}
         </div>
       </>}
     </HeirloomDialog>}

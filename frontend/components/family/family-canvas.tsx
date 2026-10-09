@@ -27,6 +27,7 @@ import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 export interface FamilyCanvasProps {
   liveMemories?: FamilyMemory[];
   onOpenMemories?: (personId: string) => void;
+  onEditPerson?: (personId: string) => void;
   initialSelectedId?: string | null;
   initialDiscoveryPathKey?: string | null;
   isNewBranchAdded?: boolean;
@@ -130,6 +131,7 @@ function zoomToBand(zoom: number): ZoomBand {
 function FamilyCanvasInner({
   liveMemories,
   onOpenMemories,
+  onEditPerson,
   initialSelectedId = null,
   initialDiscoveryPathKey = null,
   isNewBranchAdded = false,
@@ -705,6 +707,7 @@ function FamilyCanvasInner({
             onStartDiscovery={handleStartDiscovery}
             onExploreBranch={handleExploreBranch}
             onOpenMemories={onOpenMemories}
+            onEditPerson={onEditPerson}
           />
         </div>
       )}
@@ -730,6 +733,7 @@ function FamilyCanvasInner({
             onStartDiscovery={handleStartDiscovery}
             onExploreBranch={handleExploreBranch}
             onOpenMemories={onOpenMemories}
+            onEditPerson={onEditPerson}
           />
         </div>
       )}

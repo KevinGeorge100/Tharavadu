@@ -599,8 +599,10 @@ function TharavaduAppContent() {
                   </button>
                 </div>
               </div>
-            ) : liveGraphData && activeFamily ? (
+            ) : liveGraphData && activeFamily && liveGraph ? (
               <LiveFamilyWorkspace
+                graph={liveGraph}
+                selfId={activeFamily.self_id}
                 key={activeFamily?.id}
                 customMembers={liveGraphData.members}
                 customEdges={liveGraphData.edges}
@@ -610,7 +612,11 @@ function TharavaduAppContent() {
                 onLiveGraphChanged={(graph) => {
                   if (!activeFamily) return;
                   setLiveGraph(graph);
-                  setLiveGraphData(backendGraphToCanvas(graph, activeFamily.self_id));
+                  setLiveGraphData((previous) => {
+                    const adapted = backendGraphToCanvas(graph, activeFamily.self_id);
+                    const sameStructure = JSON.stringify(graph.edges) === JSON.stringify(liveGraph.edges) && graph.people.map((person) => person.id).join() === liveGraph.people.map((person) => person.id).join();
+                    return sameStructure && previous ? { ...adapted, positions: previous.positions } : adapted;
+                  });
                   setBloomPersonIds([]);
                 }}
                 onLiveAuthExpired={handleLiveAuthExpired}

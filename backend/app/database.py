@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from sqlalchemy import JSON, Column, Float, Integer, MetaData, String, Table, Text, create_engine, select, update
 
-from .domain import Conflict
+from .domain import Conflict, validate
 from .schemas import Edge, Graph, Person
 
 metadata = MetaData()
@@ -65,6 +65,37 @@ class LocalGraphRepository:
 
     def delete(self, family_id):
         self.db.execute(snapshots.delete().where(snapshots.c.family_id == family_id))
+
+    def add_memory(self, memory, expected):
+        with self.db.engine.begin() as conn:
+            locked = conn.execute(update(snapshots).where(
+                snapshots.c.family_id == memory["family_id"], snapshots.c.revision == expected
+            ).values(revision=expected))
+            if locked.rowcount != 1:
+                raise Conflict("The family changed. Refresh before keeping this memory.")
+            conn.execute(memories.insert().values(**memory))
+
+    def remove_person(self, family_id, person_id, expected):
+        graph = self.read(family_id)
+        if not any(person.id == person_id for person in graph.people):
+            raise Conflict("Person not found in this family")
+        graph.people = [person for person in graph.people if person.id != person_id]
+        graph.edges = [edge for edge in graph.edges if person_id not in (edge.source, edge.target)]
+        validate(graph)
+        graph.revision = expected + 1
+        with self.db.engine.begin() as conn:
+            result = conn.execute(update(snapshots).where(
+                snapshots.c.family_id == family_id, snapshots.c.revision == expected
+            ).values(revision=graph.revision, data=graph.model_dump(mode="json")))
+            if result.rowcount != 1:
+                raise Conflict("The graph changed. Refresh before removing this person.")
+            rows = conn.execute(select(memories).where(memories.c.family_id == family_id)).mappings()
+            for memory in rows:
+                if person_id in memory["people"]:
+                    conn.execute(update(memories).where(memories.c.id == memory["id"]).values(
+                        people=[person for person in memory["people"] if person != person_id]
+                    ))
+        return graph
 
     def close(self):
         pass

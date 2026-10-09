@@ -12,6 +12,7 @@ interface PersonFocusDrawerProps {
   onStartDiscovery: (sourceId: string) => void;
   onExploreBranch: (sourceId: string) => void;
   onOpenMemories?: (personId: string) => void;
+  onEditPerson?: (personId: string) => void;
 }
 
 export function PersonFocusDrawer({
@@ -22,6 +23,7 @@ export function PersonFocusDrawer({
   onStartDiscovery,
   onExploreBranch,
   onOpenMemories,
+  onEditPerson,
 }: PersonFocusDrawerProps) {
   const datesText = member.birthYear && member.deathYear
     ? `${member.birthYear}–${member.deathYear}`
@@ -90,6 +92,7 @@ export function PersonFocusDrawer({
         <span>📷 {member.photosCount}</span>
       </div>
       {onOpenMemories && <button className="kin-press-ghost" onClick={() => onOpenMemories(member.id)} style={{ minHeight: 44 }}>Memories ({member.memoriesCount}) · Add memory</button>}
+      {onEditPerson && <button className="kin-press-ghost" onClick={() => onEditPerson(member.id)} style={{ minHeight: 44 }}>Edit person</button>}
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {member.directConnections.map((rel) => (

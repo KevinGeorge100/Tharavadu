@@ -80,3 +80,9 @@ class PersonEdit(Strict):
     gender: Literal["male", "female", "unspecified"]
     birth_date: date | None = None
     death_date: date | None = None
+
+    @model_validator(mode="after")
+    def dates(self):
+        if self.birth_date and self.death_date and self.birth_date > self.death_date:
+            raise ValueError("Birth date must precede death date")
+        return self
