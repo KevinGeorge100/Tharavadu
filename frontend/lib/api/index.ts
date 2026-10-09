@@ -4,4 +4,5 @@ export * from "./auth";
 export * from "./families";
 export * from "./proposals";
 export * from "./relationships";
+export * from "./memories";
 export * from "./adapter";

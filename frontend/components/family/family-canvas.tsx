@@ -16,6 +16,8 @@ import { CanvasEdge } from "@/lib/api/adapter";
 import { DEMO_DISCOVERY_PATHS, DiscoveryPath, findDemoPath } from "@/data/demo-paths";
 import { PersonNode, PersonNodeData, ZoomBand } from "@/components/family/person-node";
 import { MemoryArtifactNode, MemoryNodeData } from "@/components/family/memory-artifact-node";
+import { LiveMemoryNode } from "./live-memory-node";
+import { FamilyMemory } from "@/lib/api/memories";
 import { KinshipRelationshipEdge } from "@/components/family/relationship-edge";
 import { PersonFocusDrawer } from "@/components/family/person-focus-drawer";
 import { RelationshipPathModal } from "@/components/family/relationship-path-modal";
@@ -23,6 +25,8 @@ import { ApiError, BackendGraph, getFamilyGraph, getRelationship, RelationshipRe
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 
 export interface FamilyCanvasProps {
+  liveMemories?: FamilyMemory[];
+  onOpenMemories?: (personId: string) => void;
   initialSelectedId?: string | null;
   initialDiscoveryPathKey?: string | null;
   isNewBranchAdded?: boolean;
@@ -39,6 +43,7 @@ export interface FamilyCanvasProps {
 }
 
 const nodeTypes = {
+  liveMemoryNode: LiveMemoryNode,
   personNode: PersonNode,
   memoryNode: MemoryArtifactNode,
 };
@@ -123,6 +128,8 @@ function zoomToBand(zoom: number): ZoomBand {
 }
 
 function FamilyCanvasInner({
+  liveMemories,
+  onOpenMemories,
   initialSelectedId = null,
   initialDiscoveryPathKey = null,
   isNewBranchAdded = false,
@@ -370,7 +377,7 @@ function FamilyCanvasInner({
       });
     });
 
-    if (selectedPersonId) {
+    if (selectedPersonId && !customMembers) {
       DEMO_MEMORIES.filter((memory) => memory.targetPersonId === selectedPersonId)
         .slice(0, 3)
         .forEach((memory) => {
@@ -390,6 +397,26 @@ function FamilyCanvasInner({
         });
     }
 
+    if (selectedPersonId && customMembers && customPositions && onOpenMemories) {
+      const anchor = customPositions[selectedPersonId];
+      if (anchor) {
+        const occupied = Object.values(customPositions).map((pos) => ({ ...pos, width: 185, height: 270 }));
+        (liveMemories || []).filter((memory) => memory.people.includes(selectedPersonId)).slice(0, 3).forEach((memory, index) => {
+          let position = { x: anchor.x - 230, y: anchor.y + index * 155 };
+          const candidates = Array.from({ length: 24 }, (_, slot) => ({
+            x: anchor.x + (slot % 2 ? 240 : -230) * (1 + Math.floor(slot / 8)),
+            y: anchor.y + (Math.floor(slot / 2) % 4) * 155,
+          }));
+          position = candidates.find((pos) => !occupied.some((box) =>
+            pos.x < box.x + box.width + 15 && pos.x + 200 > box.x - 15 && pos.y < box.y + box.height + 15 && pos.y + 140 > box.y - 15
+          )) || position;
+          occupied.push({ ...position, width: 200, height: 140 });
+          nodes.push({ id: `memory-${memory.id}`, type: "liveMemoryNode", position, draggable: false, selectable: false,
+            data: { memory, onOpen: () => onOpenMemories(selectedPersonId) } });
+        });
+      }
+    }
+
     return nodes;
   }, [
     allMembers,
@@ -407,6 +434,8 @@ function FamilyCanvasInner({
     bloomPersonIds,
     liveFamilyId,
     trailPickerFrom,
+    liveMemories,
+    onOpenMemories,
   ]);
 
   const initialEdges: Edge[] = useMemo(() => {
@@ -507,6 +536,16 @@ function FamilyCanvasInner({
     }, 40);
     return () => window.clearTimeout(timer);
   }, [selectedPersonId, trailPickerFrom, getNode, setCenter]);
+
+  useEffect(() => {
+    if (!selectedPersonId || !liveMemories || trailPickerFrom) return;
+    const nearby = liveMemories.filter((memory) => memory.people.includes(selectedPersonId)).slice(0, 3);
+    if (!nearby.length) return;
+    const timer = window.setTimeout(() => {
+      fitView({ nodes: [{ id: selectedPersonId }, ...nearby.map((memory) => ({ id: `memory-${memory.id}` }))], padding: 0.3, duration: 280, minZoom: 0.25, maxZoom: 1.05 });
+    }, 100);
+    return () => window.clearTimeout(timer);
+  }, [selectedPersonId, liveMemories, trailPickerFrom, fitView]);
 
   useEffect(() => {
     if (!liveFamilyId || !trailPickerFrom) return;
@@ -651,6 +690,7 @@ function FamilyCanvasInner({
               className="kin-press-ghost"
               style={{ padding: "10px 12px", minHeight: 44 }}
               onClick={() => {
+                if (onOpenMemories) { onOpenMemories(selectedMember.id); return; }
                 setMemoryToast(`A memory slot opened beside ${selectedMember.name.split(" ")[0]}.`);
                 window.setTimeout(() => setMemoryToast(null), 2200);
               }}
@@ -664,6 +704,7 @@ function FamilyCanvasInner({
             onSelectRelative={handleSelectPerson}
             onStartDiscovery={handleStartDiscovery}
             onExploreBranch={handleExploreBranch}
+            onOpenMemories={onOpenMemories}
           />
         </div>
       )}
@@ -688,6 +729,7 @@ function FamilyCanvasInner({
             onSelectRelative={handleSelectPerson}
             onStartDiscovery={handleStartDiscovery}
             onExploreBranch={handleExploreBranch}
+            onOpenMemories={onOpenMemories}
           />
         </div>
       )}

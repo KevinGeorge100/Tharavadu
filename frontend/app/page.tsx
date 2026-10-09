@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, Suspense } from "react
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { BrandMark } from "@/components/brand-mark";
+import { LiveFamilyWorkspace } from "@/components/family/live-family-workspace";
 import { AlbumStarter } from "@/components/onboarding/album-starter";
 import { TharavaduComposer } from "@/components/tharavadu/tharavadu-composer";
 import { ExtractionPreview, LiveExtractionPreview } from "@/components/tharavadu/extraction-preview";
@@ -93,6 +94,10 @@ function TharavaduAppContent() {
   const [bloomPersonIds, setBloomPersonIds] = useState<string[]>([]);
   const [bloomToken, setBloomToken] = useState(0);
   const proposalLock = useRef(false);
+  const handleLiveAuthExpired = useCallback(() => {
+    setUser(null);
+    setAuthModalOpen(true);
+  }, []);
 
   // Load families and their graphs
   const loadFamiliesAndGraph = useCallback(async (preferFamilyId?: string) => {
@@ -594,13 +599,13 @@ function TharavaduAppContent() {
                   </button>
                 </div>
               </div>
-            ) : liveGraphData ? (
-              <FamilyCanvas
+            ) : liveGraphData && activeFamily ? (
+              <LiveFamilyWorkspace
                 key={activeFamily?.id}
                 customMembers={liveGraphData.members}
                 customEdges={liveGraphData.edges}
                 customPositions={liveGraphData.positions}
-                liveFamilyId={activeFamily?.id}
+                liveFamilyId={activeFamily.id}
                 liveGraphRevision={liveGraph?.revision}
                 onLiveGraphChanged={(graph) => {
                   if (!activeFamily) return;
@@ -608,10 +613,7 @@ function TharavaduAppContent() {
                   setLiveGraphData(backendGraphToCanvas(graph, activeFamily.self_id));
                   setBloomPersonIds([]);
                 }}
-                onLiveAuthExpired={() => {
-                  setUser(null);
-                  setAuthModalOpen(true);
-                }}
+                onLiveAuthExpired={handleLiveAuthExpired}
                 bloomPersonIds={bloomPersonIds}
                 bloomToken={bloomToken}
                 initialSelectedId={selectedPersonId}
