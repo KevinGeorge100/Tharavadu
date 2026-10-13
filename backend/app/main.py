@@ -56,8 +56,20 @@ def create_app(config: Settings = settings, provider=None):
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             if request.headers.get("x-tharavadu-client") != "web" or request.headers.get("origin", config.app_origin) != config.app_origin:
                 return JSONResponse({"detail": "Invalid request origin"}, status_code=403)
-            if int(request.headers.get("content-length", 0)) > 100_000:
+            try:
+                declared_length = int(request.headers.get("content-length", "0"))
+            except ValueError:
+                return JSONResponse({"detail": "Invalid content length"}, status_code=400)
+            if declared_length > 100_000:
                 return JSONResponse({"detail": "Request too large"}, status_code=413)
+            chunks = []
+            body_size = 0
+            async for chunk in request.stream():
+                body_size += len(chunk)
+                if body_size > 100_000:
+                    return JSONResponse({"detail": "Request too large"}, status_code=413)
+                chunks.append(chunk)
+            request._body = b"".join(chunks)
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Cache-Control"] = "no-store"

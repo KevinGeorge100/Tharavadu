@@ -14,11 +14,13 @@ export default defineConfig({
     channel: process.env.PLAYWRIGHT_CHANNEL || undefined },
   projects: [
     { name: "desktop", use: { browserName: "chromium", viewport: { width: 1280, height: 800 } } },
+    { name: "wide", use: { browserName: "chromium", viewport: { width: 1920, height: 1080 } } },
     { name: "mobile", use: { browserName: "chromium", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
   ],
   webServer: [
     { command: `"${python}" scripts/e2e_backend.py`, cwd: repo, url: "http://127.0.0.1:8010/api/health", reuseExistingServer: false, timeout: 30000 },
-    { command: "npm run build && node node_modules/next/dist/bin/next start --hostname 127.0.0.1 -p 3010", cwd: __dirname,
-      env: { API_URL: "http://127.0.0.1:8010" }, url: "http://127.0.0.1:3010", reuseExistingServer: false, timeout: 180000 },
+    { command: "npm run build && node -e \"require('node:fs').cpSync('.next/static', '.next/standalone/.next/static', { recursive: true })\" && node .next/standalone/server.js", cwd: __dirname,
+      env: { API_URL: "http://127.0.0.1:8010", PORT: "3010", HOSTNAME: "127.0.0.1" },
+      url: "http://127.0.0.1:3010", reuseExistingServer: false, timeout: 180000 },
   ],
 });

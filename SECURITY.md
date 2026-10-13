@@ -1,0 +1,5 @@
+# Security policy
+
+Family records and memories can be sensitive. Please do not open a public issue for a suspected vulnerability or include real family data, credentials, session cookies, or database files in a report. Use GitHub's private vulnerability reporting or contact the repository maintainer privately through their GitHub profile. Include the affected version or commit, reproduction steps using fictional data, impact, and a safe contact method. We will acknowledge and investigate reports before discussing fixes publicly.
+
+The default local setup is for development and evaluation. For an Internet deployment, use HTTPS, set `APP_ORIGIN` to the public browser origin and `COOKIE_SECURE=True`, restrict backend exposure, manage secrets outside Git, and arrange SQLite backups. The current in-memory rate limiter is per process, so multi-worker public deployment requires shared rate limiting. Neo4j/PostgreSQL deployments have not been validated by the default suite. Supported security fixes target the latest `main` commit.

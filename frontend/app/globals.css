@@ -373,6 +373,7 @@ a {
 .kin-field input, .kin-field textarea, .kin-field select { width: 100%; padding: 10px; font: inherit; color: var(--ink); background: var(--cream); border: 2px solid var(--ink); }
 .kin-memory-list article { border-top: 1px solid var(--ink); padding: 10px 0; }
 .kin-live-memory { display: flex; flex-direction: column; gap: 8px; width: 200px; height: 140px; overflow: hidden; padding: 14px; background: var(--bg-archival-note); border: 2px solid var(--ink); box-shadow: var(--shadow-paper); font: .8rem var(--font-serif); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+.kin-flow-frame { position: absolute; inset: 0 0 168px 0; }
 :focus-visible { outline: 3px solid var(--accent-warm); outline-offset: 3px; }
 
 @media (max-width: 768px) {
@@ -386,6 +387,8 @@ a {
     flex-wrap: wrap;
     justify-content: flex-start;
   }
+
+  .kin-flow-frame { top: 64px; }
 
   .kin-desktop-inspector {
     display: none;

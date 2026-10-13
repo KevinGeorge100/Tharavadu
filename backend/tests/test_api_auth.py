@@ -36,6 +36,18 @@ async def test_mutations_require_client_header_and_matching_origin(client):
     assert (await client.get("/api/me", headers={"Origin": TEST_ORIGIN})).status_code == 200
 
 
+async def test_streamed_mutation_cannot_bypass_body_limit(client):
+    async def oversized_body():
+        yield b'{"email":"stream@example.test","password":"safe-password-123"}'
+        yield b" " * 100_001
+
+    response = await client.post(
+        "/api/auth/register", content=oversized_body(), headers={"Content-Type": "application/json"}
+    )
+    assert response.status_code == 413
+    assert (await client.get("/api/me")).status_code == 401
+
+
 async def test_each_app_uses_only_its_temporary_database(client, tmp_path):
     assert client.test_database.parent == tmp_path
     assert client.test_database.is_file()

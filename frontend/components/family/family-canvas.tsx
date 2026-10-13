@@ -524,10 +524,10 @@ function FamilyCanvasInner({
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      fitView({ padding: 0.12, duration: 280, minZoom: 0.55, maxZoom: 1.15 });
+      fitView({ padding: 0.12, duration: 280, minZoom: liveFamilyId ? 0.2 : 0.42, maxZoom: 1.15 });
     }, 180);
     return () => window.clearTimeout(timer);
-  }, [fitView, branchAdded]);
+  }, [fitView, branchAdded, liveFamilyId]);
 
   useEffect(() => {
     if (!selectedPersonId || trailPickerFrom) return;
@@ -585,7 +585,7 @@ function FamilyCanvasInner({
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <div style={{ position: "absolute", inset: "0 0 168px 0" }}>
+      <div className="kin-flow-frame">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -600,11 +600,11 @@ function FamilyCanvasInner({
         }}
         onMove={handleMove}
         onInit={(instance) => {
-          instance.fitView({ padding: 0.12, duration: 0 });
+          instance.fitView({ padding: 0.12, duration: 0, minZoom: liveFamilyId ? 0.2 : 0.42 });
         }}
         fitView
-        fitViewOptions={{ padding: 0.12, minZoom: 0.55, maxZoom: 1.15 }}
-        minZoom={liveFamilyId ? 0.25 : 0.42}
+        fitViewOptions={{ padding: 0.12, minZoom: liveFamilyId ? 0.2 : 0.42, maxZoom: 1.15 }}
+        minZoom={liveFamilyId ? 0.2 : 0.42}
         maxZoom={1.7}
         nodesDraggable={false}
         nodesConnectable={false}
@@ -622,7 +622,7 @@ function FamilyCanvasInner({
           <ZoomOut size={18} />
         </button>
         <button
-          onClick={() => fitView({ padding: 0.16, duration: 350 })}
+          onClick={() => fitView({ padding: 0.16, duration: 350, minZoom: liveFamilyId ? 0.2 : 0.42 })}
           className="kin-control-btn"
           aria-label="Fit family to view"
           title="Fit view"

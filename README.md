@@ -1,276 +1,98 @@
-# Tharavadu 🌳
+# Tharavadu (തറവാട്)
 
-**AI-Assisted Personal Family Discovery & Kinship Reasoning**
+**A local-first family history workspace.** Tell a story, review the proposed people and connections, and choose what becomes part of your family tree. Tharavadu keeps kinship answers grounded in a deterministic Python graph, while its AI providers only interpret stories into proposals.
 
-> "Tell me your family stories, and together we'll discover your roots."
+![Tharavadu family canvas](docs/images/family-canvas.png)
 
----
+![Review a story before changing the family tree](docs/images/proposal-review.png)
 
-## What is Tharavadu?
+Family history is personal and often uncertain. Tharavadu gives people a visual place to preserve memories and correct mistakes without letting a language model silently decide family truth. The default setup uses SQLite, a local graph, and an offline English parser: no paid service, API key, Neo4j, or PostgreSQL is needed.
 
-**Tharavadu** is a playful, personal, story-driven family discovery workspace. Instead of filling out rigid, intimidating genealogy forms with dozens of empty date pickers, you simply share your family narratives in everyday natural language:
+## What works today
 
-> *"My father Joseph has an older brother named Thomas. Thomas has two children named Raj and Maya."*
+- Register, sign in, create separate family workspaces, and return to persisted data.
+- Add relatives through a narrative proposal, inspect the interpretation, resolve ambiguous names, then confirm or discard it.
+- Explore the family canvas and ask for deterministic relationships with an evidence trail.
+- Keep and remove journal memories linked to people. Edit people and remove relationships; in local mode, remove a person without recursively deleting relatives. Memories remain in the family journal with the removed person's link detached.
+- Try a fictional demo family without creating an account.
 
-From there, Tharavadu:
-1. **Listens & Proposes:** An AI/NLP extraction engine reads your words and creates a typed, human-reviewable change proposal.
-2. **Empowers Human Oversight:** If names are ambiguous (like having two relatives named *"George"*), Tharavadu never guesses. It asks you to clarify with a single click.
-3. **Maintains Graph Truth:** Once confirmed, facts are committed to a cycle-free family graph.
-4. **Reasons Deterministically:** Formal graph algorithms compute exact relationships—such as *"first cousin, 1 time removed"*, *"great-aunt"*, or complex in-law paths—with transparent, step-by-step explanations.
+The offline parser recognizes simple English relationship statements; it is not a general language model. An optional OpenAI provider can interpret broader stories, but still cannot write graph truth. The Neo4j adapter exists, but live Neo4j/PostgreSQL operation is not covered by the default test suite. Person deletion is currently unavailable in Neo4j mode; see [ADR-0004](docs/adr/ADR-0004-person-removal-memory-retention.md).
 
----
+## Quick start
 
-## Why Tharavadu Exists
+Use Python 3.12+, Node.js 22+, npm, and Git. From the repository root:
 
-Genealogy software is often clunky, corporate, or overly academic. Tharavadu treats family history as a living, conversational discovery experience:
-- **Playful & Visual:** Built for visual exploration, narrative memory journaling, and relational questions (*"How are Raj and Joseph related?"*).
-- **Zero Hallucinations on Kinship:** Large language models are fantastic at interpreting human language, but notoriously unreliable at mathematical graph traversal and multi-generational logic. Tharavadu strictly separates language understanding from graph reasoning.
-
-```
-                THE THARAVADU ARCHITECTURAL BOUNDARY
-  ┌─────────────────────────────────────────────────────────────┐
-  │                 AI / Extraction Boundary                    │
-  │  • Interpret informal English narratives                    │
-  │  • Extract candidate entities and relationships             │
-  │  • Surface homonym ambiguities & uncertainty warnings       │
-  │  • STRICTLY PROPOSAL-ONLY: Zero direct database writes      │
-  └──────────────────────────────┬──────────────────────────────┘
-                                 │
-                                 ▼ (Human Confirmation)
-  ┌─────────────────────────────────────────────────────────────┐
-  │              Deterministic Python Engine                    │
-  │  • Ancestry cycle detection (DFS)                           │
-  │  • Sibling-as-ancestor invariant validation                 │
-  │  • BFS graph traversal for exact kinship paths              │
-  │  • Mathematical cousin degree and removed classification    │
-  │  • Immutable, optimistic revision concurrency               │
-  └─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Current Project Status
-
-| Layer | Status | Details |
-| :--- | :--- | :--- |
-| **Domain Logic** | **100% Tested** | 88 automated pytest unit tests covering cycle checks, homonym disambiguation, cousin math, queries, and schemas. |
-| **Backend Service** | **Functional Prototype** | FastAPI app with session auth, SQLite/Neo4j graph repositories, memory journal, and REST API. |
-| **Frontend UI** | **Spatial canvas prototype** | Next.js 16 + React 19 family exploration canvas from **KIN-004**; backend connection is future work. |
-| **Backend API Tests** | **103 passing** | 88 domain tests and 15 local HTTP integration tests in **THAR-005**. |
-
----
-
-## Tech Stack
-
-- **Backend:** Python 3.14+, FastAPI, SQLAlchemy v2, Pydantic v2, Uvicorn.
-- **Data & Graph:** SQLite (default local mode) / PostgreSQL + Neo4j (optional production mode).
-- **AI Extraction:** Dual-provider architecture:
-  - *Offline Mode:* Deterministic regex parser (zero cloud dependencies, instant, free).
-  - *OpenAI Mode:* Structured outputs via `gpt-4.1-mini` (`client.responses.parse`).
-- **Frontend Workspace:** Next.js 16 (App Router), TypeScript, `@xyflow/react` (React Flow), Lucide Icons.
-- **Testing & Quality:** Pytest, Ruff, Playwright, ESLint.
-
----
-
-## Repository Structure
-
-```
-tharavadu/
-├── backend/
-│   ├── app/
-│   │   ├── ai.py          # Dual extraction providers (offline regex + OpenAI structured outputs)
-│   │   ├── config.py      # Pydantic Settings and environment configuration
-│   │   ├── database.py    # SQLAlchemy tables & Local / Neo4j graph repositories
-│   │   ├── domain.py      # Graph validation, cycle detection, identity resolution & kinship math
-│   │   ├── main.py        # FastAPI endpoints, session auth, rate limiting, and middleware
-│   │   ├── queries.py     # Natural language kinship query parser & evidence generator
-│   │   ├── schemas.py     # Strict Pydantic v2 data models
-│   │   └── seed.py        # 8-person demo family graph generator
-│   ├── tests/             # Pytest test suite (88 domain, kinship, query, and schema tests)
-│   └── requirements.txt   # Pinned Python dependencies
-├── frontend/
-│   ├── package.json       # Next.js, React Flow, and Lucide dependencies
-│   ├── next.config.ts     # Standalone output, security headers, and API proxy rewrites
-│   ├── tsconfig.json      # TypeScript configuration
-│   └── eslint.config.mjs  # ESLint flat config
-├── docs/                  # Architecture specs, ADRs, backlog, and roadmap
-├── .env.example           # Documented configuration template
-└── pyproject.toml         # Ruff and project tool configuration
-```
-
----
-
-## Prerequisites
-
-Before running Tharavadu, make sure you have:
-- **Python 3.14+** (Python 3.12+ also supported)
-- **Node.js 20+** (v24 LTS recommended) and **npm 10+**
-- **Git**
-
----
-
-## Local Setup Guide
-
-### 1. Clone the Repository
 ```bash
 git clone https://github.com/KevinGeorge100/Tharavadu.git
 cd Tharavadu
-```
-
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env` in the repository root:
-```bash
-# Linux / macOS
 cp .env.example .env
-
-# Windows (PowerShell)
-Copy-Item .env.example .env
-```
-*The default `.env` is pre-configured for zero-external-dependency local development (SQLite + Offline NLP).*
-
-### 3. Backend Setup
-Set up a Python virtual environment and install backend dependencies:
-
-#### Windows (PowerShell)
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r backend/requirements.txt
-```
-
-#### Linux / macOS
-```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r backend/requirements.txt
+python -m pip install -r backend/requirements.txt
+cd frontend && npm ci && cd ..
 ```
 
-### 4. Frontend Setup
-Install frontend Node modules using the lockfile:
+On Windows PowerShell, use `Copy-Item .env.example .env`, `python -m venv .venv`, and `.\.venv\Scripts\Activate.ps1` instead of the corresponding shell commands above.
+
+Start the backend from the repository root:
+
 ```bash
-cd frontend
-npm ci
-cd ..
+python -m uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
----
+In a second terminal, start the frontend:
 
-## Running Locally
-
-### Start the Backend Service
-With your virtual environment active, run:
-
-```powershell
-# From repository root (Windows PowerShell)
-.\.venv\Scripts\uvicorn.exe backend.app.main:app --reload --port 8000
-
-# Or generic / Linux / macOS:
-uvicorn backend.app.main:app --reload --port 8000
-```
-- Interactive API Docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- Health Check: [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health)
-
-### Start the Frontend Dev Server
 ```bash
 cd frontend
 npm run dev
 ```
-- Web Application: [http://localhost:3000](http://localhost:3000)
 
-The KIN-004 canvas is a visual prototype. API integration into the frontend is a later task.
+Open [http://localhost:3000](http://localhost:3000). The backend health endpoint is [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health). The frontend proxies `/api` to the backend; for a different backend address, set `API_URL` in the frontend process environment or `frontend/.env.local` before starting or building Next.js. Keep `APP_ORIGIN` aligned with the browser origin. The root `.env` is read by Python; its default database path stores local data in `tharavadu.db` in the repository root.
 
----
+### Docker Compose
 
-## Configuration Modes
+If Docker Engine is running, the local-first container path is:
 
-### Mode A: Zero-External-Service Local Development (Recommended Default)
-No third-party accounts, cloud keys, or Docker containers required:
-```env
-DATABASE_URL=sqlite:///./tharavadu.db
-GRAPH_BACKEND=local
-AI_PROVIDER=offline
-APP_ORIGIN=http://localhost:3000
-```
-- **Storage:** Stored locally in a lightweight `tharavadu.db` SQLite database.
-- **AI Extraction:** Uses the built-in deterministic English grammar parser in `backend/app/ai.py`.
-
-### Mode B: Cloud AI Extraction (OpenAI)
-To enable unstructured natural conversation extraction using OpenAI:
-```env
-AI_PROVIDER=openai
-OPENAI_API_KEY=sk-proj-...
-OPENAI_MODEL=gpt-4.1-mini
-```
-
-### Mode C: Graph Database Persistence (Neo4j)
-To persist family relationships directly into a Neo4j instance:
-```env
-GRAPH_BACKEND=neo4j
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=secret
-```
-
----
-
-## Running Quality Checks & Tests
-
-### Backend Tests (Pytest)
-Run the 88 deterministic domain tests and 15 HTTP API integration tests:
-```powershell
-# Windows PowerShell
-.\.venv\Scripts\python.exe -m pytest backend/tests -q
-
-# Linux / macOS
-python -m pytest backend/tests -q
-```
-
-### Code Formatting & Linting (Ruff)
-```powershell
-# Windows PowerShell
-.\.venv\Scripts\ruff.exe check backend
-
-# Linux / macOS
-ruff check backend
-```
-
-### Frontend Typechecking & Linting
 ```bash
+docker compose up --build
+```
+
+Visit [http://localhost:3000](http://localhost:3000). Compose uses only the frontend, backend, and a named SQLite volume. It does not require `.env`, a cloud account, or an AI key. Stop with `docker compose down`; omit `--volumes` if you want to retain family data. This container path is provided for local use and has not yet been runtime-verified on a machine with Docker Engine.
+
+## Configuration
+
+Copy [.env.example](.env.example) for local Python development. Its defaults are `DATABASE_URL=sqlite:///./tharavadu.db`, `GRAPH_BACKEND=local`, `AI_PROVIDER=offline`, and `APP_ORIGIN=http://localhost:3000`. Offline extraction is limited but free and predictable. To use OpenAI, set `AI_PROVIDER=openai` and provide `OPENAI_API_KEY` in your untracked `.env` or process environment; proposals still require human confirmation. Never commit real credentials or family data. Cookie `Secure` must be enabled when serving over HTTPS.
+
+## Architecture
+
+```text
+story → offline/OpenAI extraction → typed proposal → human review
+                                              ↓ confirmation
+                                  Python validation + graph revision
+                                              ↓
+                         SQLite/local graph → deterministic kinship trail
+```
+
+Next.js 16 and React 19 render the canvas and journal. FastAPI, Pydantic, and SQLAlchemy handle sessions, family-scoped APIs, proposals, and persistence. Python owns graph validation, cycle prevention, and kinship math. The default local graph is a revisioned SQLite snapshot; Neo4j is an optional adapter. Read [Architecture](docs/ARCHITECTURE.md) and the [ADRs](docs/adr/README.md) for boundaries and tradeoffs.
+
+## Checks
+
+Run from the repository root after installing dependencies:
+
+```bash
+python -m ruff check backend
+python -m pytest backend/tests -q
 cd frontend
 npm run typecheck
 npm run lint
+npm run build
+npm test
 ```
 
----
+Playwright starts an isolated temporary SQLite backend and a production Next.js frontend automatically. It uses the offline provider and needs a Playwright Chromium browser installation (`npx playwright install chromium` from `frontend/` if missing). CI runs the same backend, frontend, and browser checks on pushes to `main` and pull requests.
 
-## Security & Privacy Guidelines
+## Project status and contributing
 
-Family data is deeply personal. All contributors must follow these rules:
-- **Never commit `.env` or local secrets:** `.env` and `.env.local` are strictly ignored by `.gitignore`.
-- **Never commit database files:** SQLite files (`*.db`, `*.db-journal`) are strictly git-ignored.
-- **Session Tokens:** Auth tokens are hashed with SHA-256 before storage; passwords use Scrypt with unique salt.
-- **Origin & Client Validation:** Mutating endpoints require `x-tharavadu-client: web` and a matching `Origin` header to mitigate CSRF attacks.
+The integrated local MVP has automated backend and desktop/mobile browser coverage; see [current project status](docs/PROJECT_STATUS.md) for measured results and remaining limitations. [Roadmap](docs/ROADMAP.md) lists future work. Contributions are welcome: read [CONTRIBUTING.md](CONTRIBUTING.md), the [Code of Conduct](CODE_OF_CONDUCT.md), and [Security Policy](SECURITY.md). Changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
----
-
-## Architectural Decisions & Governance
-
-Key architectural choices are formally documented in [`docs/adr/`](docs/adr):
-- **[ADR-0001: Hybrid Graph & Relational Storage](docs/adr/ADR-0001-hybrid-graph-relational-storage.md)** — Relational database for metadata; swappable JSON snapshot or Neo4j backend.
-- **[ADR-0002: Proposal-First AI Extraction](docs/adr/ADR-0002-proposal-first-ai-extraction.md)** — AI models can only stage proposals; humans approve all graph mutations.
-- **[ADR-0003: Pure Python Kinship Reasoning](docs/adr/ADR-0003-pure-python-deterministic-kinship-reasoning.md)** — Zero LLMs in the relationship deduction or cycle detection path.
-
----
-
-## Work in Progress & Roadmap
-
-- **Completed:** M0 Stabilization (KIN-001 Lint Baseline, KIN-002 Domain Unit Tests, KIN-003 Environment & Setup).
-- **Awaiting review:** **KIN-004** frontend foundation and stacked **THAR-005** FastAPI integration tests.
-- **Next:** Frontend/backend integration remains a separate task.
-
----
-
-## License
-
-Project Tharavadu is open-source software released under the [MIT License](LICENSE).  
-Copyright (c) 2026 Tharavadu contributors.
+Released under the [MIT License](LICENSE).

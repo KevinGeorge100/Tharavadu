@@ -155,3 +155,57 @@ test("corrections preserve relatives and memories", async ({ page, context }) =>
   expect(saved.people.map((person: { id: string }) => person.id)).toEqual([family.self_id]);
   expect((await api(context, "GET", `/api/families/${family.id}/memories`))[0].people).toEqual([]);
 });
+
+test("family switching ignores a delayed earlier graph", async ({ page, context }) => {
+  await register(page);
+  const first = (await api(context, "GET", "/api/families"))[0];
+  await page.getByRole("button", { name: "+ Family", exact: true }).click();
+  await familyForm(page, "Second fictional family", "Nora");
+  const second = (await api(context, "GET", "/api/families")).find((family: { id: string }) => family.id !== first.id);
+  const select = page.locator("header select");
+  let markStarted: () => void = () => undefined;
+  let release: () => void = () => undefined;
+  const started = new Promise<void>((resolve) => { markStarted = resolve; });
+  const blocked = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/families/${first.id}/graph`, async (route) => {
+    markStarted();
+    await blocked;
+    await route.continue();
+  });
+  await select.selectOption(first.id);
+  await started;
+  await select.selectOption(second.id);
+  await expect(page.getByRole("button", { name: /^Nora,/ })).toBeVisible();
+  const firstResponse = page.waitForResponse((response) => response.url().includes(`/api/families/${first.id}/graph`));
+  release();
+  await firstResponse;
+  await page.waitForTimeout(200);
+  await expect(select).toHaveValue(second.id);
+  await expect(page.getByRole("button", { name: /^Nora,/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Kevin,/ })).toHaveCount(0);
+});
+
+test("larger demo family and long names fit without document overflow", async ({ page, context }, testInfo) => {
+  await register(page);
+  const family = await api(context, "POST", "/api/families", {
+    name: "Extended fictional family", person_name: "Alexandria Very Long Surname", demo: true,
+  });
+  await page.reload();
+  await page.locator("header select").selectOption(family.id);
+  await expect(page.getByRole("button", { name: /^Alexandria Very Long Surname,/ })).toBeVisible();
+  await page.getByRole("button", { name: "Fit family to view" }).click();
+  await expect(page.getByRole("button", { name: /^George,/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Maya,/ })).toBeVisible();
+  await page.waitForTimeout(500); // Let the canvas fit animation settle before visual QA.
+  const george = page.getByRole("button", { name: /^George,/ });
+  const maya = page.getByRole("button", { name: /^Maya,/ });
+  await expect(george).toBeInViewport({ ratio: 0.8 });
+  await expect(maya).toBeInViewport({ ratio: 0.8 });
+  if (testInfo.project.name === "mobile") {
+    const georgeBounds = await george.boundingBox();
+    const controlsBounds = await page.locator(".kin-controls-bar").boundingBox();
+    expect(georgeBounds!.y).toBeGreaterThanOrEqual(controlsBounds!.y + controlsBounds!.height);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+  await page.screenshot({ path: testInfo.outputPath("demo-family.png") });
+});

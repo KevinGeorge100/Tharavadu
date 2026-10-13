@@ -1,6 +1,6 @@
 # Tharavadu Architecture
 
-This document specifies the software architecture for Tharavadu. It explicitly separates the **Current Architecture** (verified by repository code) from the **Target Architecture** (planned for subsequent milestones).
+This document describes the system boundaries and original target architecture. The integrated live frontend, memory journal, correction flows, Playwright coverage, and CI now exist; see [Project Status](PROJECT_STATUS.md) for verified current state. Some diagrams below retain the earlier prototype labels as design history.
 
 ---
 
@@ -10,7 +10,7 @@ This document specifies the software architecture for Tharavadu. It explicitly s
 
 Tharavadu is organized as a polyglot monorepo:
 - **Backend:** Python (FastAPI + Pydantic v2 + SQLAlchemy v2) under `backend/app/`.
-- **Frontend Workspace:** Next.js 16 (TypeScript) App Router shell and warm constellation visual foundation (`frontend/app/`, `frontend/components/`). Full React Flow canvas integration planned for KIN-007.
+- **Frontend Workspace:** Next.js 16 (TypeScript) App Router live family workspace and React Flow constellation canvas (`frontend/app/`, `frontend/components/`).
 - **Core Reasoning Engine:** Pure Python deterministic graph traversal, cycle detection, and kinship classification (`backend/app/domain.py`, `backend/app/queries.py`). **No LLMs are used for graph reasoning or relationship determination.**
 
 ```mermaid
@@ -148,10 +148,10 @@ sequenceDiagram
 
 ### Known Architectural Limitations (Current)
 
-1. **Frontend API Connection Pending:** KIN-004 established the visual canvas; live backend data and interactive graph integration remain separate work.
+1. **External Graph Mode:** The live frontend uses backend data. Person removal is supported only in local SQLite mode until cross-store atomicity is solved for Neo4j.
 2. **In-Memory Rate Limiting:** Rate limiter is confined to a local dictionary; restarts or multi-worker deployments bypass limits.
 3. **Full-Graph Neo4j Replacement:** `Neo4jGraphRepository` deletes and recreates all family nodes and edges on each revision. While safe for the 500-node MVP boundary, it is not scalable to larger enterprise graphs.
-4. **Automated Coverage Boundaries:** Domain logic has 88 unit tests and THAR-005 exercises local FastAPI HTTP flows with isolated SQLite. Live Neo4j/PostgreSQL and browser E2E remain untested.
+4. **Automated Coverage Boundaries:** 108 Python tests exercise local behavior and six Playwright cases cover desktop/mobile Chromium. Live Neo4j/PostgreSQL and other browser engines remain untested.
 
 ---
 

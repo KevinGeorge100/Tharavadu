@@ -1,103 +1,17 @@
-# Tharavadu — Project Status & Reality Assessment
+# Project status — October 13, 2026
 
-**Status as of:** October 2026
-**Engineering Baseline Assessment:** KIN-004 frontend and stacked THAR-005 backend API tests awaiting review
-**Classification:** FUNCTIONAL PROTOTYPE (Backend) / PROTOTYPE SPATIAL CANVAS (Frontend)
+Tharavadu has an integrated, local-first MVP through THAR-012. The live Next.js workspace connects to FastAPI for accounts, families, proposals, graph exploration, kinship trails, memories, and corrections. The demo remains available without an account.
 
----
+| Area | Verified state | Boundary |
+| --- | --- | --- |
+| Backend | 109 passing Python tests, including local HTTP integration flows | Live PostgreSQL and Neo4j integration not run |
+| Frontend | Typecheck, ESLint, and production build pass | No Firefox or WebKit run |
+| Browser | 15 Playwright cases pass at 1280×800, 1920×1080, and 390×844, using a disposable SQLite backend and offline provider | Chromium/Chrome only; cross-browser coverage remains future work |
+| Narrative | Offline proposal, human review, homonym resolution, confirmation, discard, stale revision handling | Offline grammar is limited; live OpenAI smoke not run without a key |
+| Kinship | Deterministic Python classifications and evidence trail shown in the UI | No model-generated relationship truth |
+| Memories | Create, list, delete, persistence, family isolation | Text memories; no file attachments |
+| Corrections | Edit person, remove edge, remove person in local mode | Neo4j person deletion returns 501 until cross-store atomicity is solved |
+| CI | Workflow added for backend, frontend, and E2E on PR/push to main; the THAR-011 main run succeeded | THAR-012 hosted run result should be checked separately |
+| Containers | Local SQLite Compose configuration passes static validation | Docker Engine runtime verification pending |
 
-## 1. Executive Summary
-
-Tharavadu is an AI-assisted personal genealogy and kinship reasoning system designed to capture family narratives, extract genealogical relations into structured proposals, resolve identity ambiguities with human oversight, and maintain an immutable, cycle-free family graph with deterministic reasoning.
-
-The repository currently exhibits a significant asymmetry:
-- **Backend (`backend/app/`):** Contains a tightly scoped, functioning prototype implementation of deterministic kinship reasoning (`domain.py`, `queries.py`), schema validation (`schemas.py`), dual AI extraction providers (`ai.py` supporting offline regex and OpenAI structured outputs), dual graph backends (`database.py` supporting SQLite snapshot and Neo4j atomic graph replacement), and session-based FastAPI endpoints (`main.py`).
-- **Frontend (`frontend/`):** Next.js App Router spatial canvas established (`app/layout.tsx`, `app/page.tsx`, `app/globals.css`, `components/family-canvas.tsx`, `components/person-node.tsx`, `components/person-card.tsx`, `components/tharavadu/tharavadu-composer.tsx`, `data/demo-family.ts`). Light-first warm scrapbook palette, conversational AI composer, and 3-generation constellation explorer. `next build`, `npm run lint`, and `npm run typecheck` all pass with 0 errors.
-- **Testing & Quality Assurance:** 88 deterministic unit tests plus HTTP integration tests in `backend/tests/`. The HTTP tests use an isolated temporary SQLite database per case and the offline extractor. Neo4j/PostgreSQL integration and Playwright E2E remain future work.
-- **Git State:** Newly initialized Git repository with active development branches off `main`.
-
----
-
-## 2. Product Maturity Assessment
-
-| Dimension | Assessment | Evidence |
-| :--- | :--- | :--- |
-| **Overall Maturity** | **FUNCTIONAL PROTOTYPE (Backend) / PROTOTYPE SPATIAL CANVAS (Frontend)** | Backend logic handles API lifecycles with 88 passing unit tests; frontend App Router spatial canvas builds cleanly and renders responsive constellation demo. |
-| **Domain Logic** | **FUNCTIONAL PROTOTYPE** | Kinship classification, ancestry cycle detection, and identity resolution algorithms are fully codified in Python and covered by 88 unit tests. |
-| **AI Integration** | **PARTIALLY IMPLEMENTED / PROPOSAL-ONLY** | Dual extraction paths exist (offline regex and OpenAI structured outputs). Both produce `Extraction` proposals; direct write access to the graph is prohibited by design. |
-| **Persistence** | **FUNCTIONAL PROTOTYPE (Local) / UNVERIFIED (Neo4j/Postgres)** | SQLite schema initialization and local snapshot storage work; Neo4j repository code exists but lacks integration test coverage. |
-| **Frontend UI** | **FUNCTIONAL SPATIAL CANVAS** | Spatial App Router canvas with light-first warm scrapbook design tokens, first-run "Start with you" prompt, interactive fictional constellation demo, and floating AI composer. Full React Flow canvas scheduled for KIN-006. |
-| **Automated Testing** | **BACKEND HTTP FLOWS TESTED** | 88 domain tests and THAR-005 HTTP integration tests cover local API behavior. E2E and live external database tests remain unconfigured. |
-
----
-
-## 3. Feature Reality Matrix
-
-The following matrix distinguishes between code existence, automated testing, integration validation, and production validation:
-
-| Capability | Status | Implementation File(s) | Verification Level | Notes & Blockers |
-| :--- | :--- | :--- | :--- | :--- |
-| **User Authentication & Session Management** | IMPLEMENTED (HTTP Tested) | `backend/app/main.py`<br>`backend/app/database.py` | THAR-005 Integration Tests | Registration, login, invalid credentials, logout, cookie session and rate limiting. |
-| **Family Workspace Scoping & Authorization** | IMPLEMENTED (HTTP Tested) | `backend/app/main.py` | THAR-005 Integration Tests | A second user cannot access the first user's graph, proposals, queries, or memories. |
-| **Kinship Traversal & Classification** | IMPLEMENTED (Unit Tested) | `backend/app/domain.py` | Automated Unit Tests | Pure Python deterministic BFS with degree/removed cousin calculations, in-laws, and ancestors. Verified by 88 tests. |
-| **Ancestry Cycle & Sibling Invariant Checks** | IMPLEMENTED (Unit Tested) | `backend/app/domain.py` | Automated Unit Tests | Detects self-ancestry cycles and sibling-as-ancestor contradictions via DFS/BFS validation. |
-| **Offline NLP Extraction** | IMPLEMENTED (Unverified) | `backend/app/ai.py` | Code Exists | Regex-based parser for basic English statements. Fails closed with `ProviderError` for unsupported syntax. |
-| **OpenAI Structured Extraction** | IMPLEMENTED (Unverified) | `backend/app/ai.py` | Code Exists | Uses `client.responses.parse` with strict Extraction schema. Requires `OPENAI_API_KEY`. Unverified against live API. |
-| **Identity Resolution & Disambiguation** | IMPLEMENTED (Unit Tested) | `backend/app/domain.py`<br>`backend/app/main.py` | Automated Unit Tests | Flags homonyms as candidate choices; requires human resolution before confirming proposal. Tested against silent merges. |
-| **Proposal Review & Application Lifecycle** | IMPLEMENTED (HTTP Tested Locally) | `backend/app/main.py` | THAR-005 Integration Tests | Staging, confirmation, homonym choices, cycle rejection, stale revisions and rejection are covered with SQLite/local graph. |
-| **Kinship Natural Language Query Engine** | IMPLEMENTED (Unit Tested) | `backend/app/queries.py` | Automated Unit Tests | Handles structured questions ("Who is X to Y", "Show my cousins", descendants). Tested in test_queries.py. |
-| **Family Memory Journal** | IMPLEMENTED (HTTP Tested Locally) | `backend/app/main.py`<br>`backend/app/database.py` | THAR-005 Integration Tests | Create, list, search, delete, and cross-family denial are covered. |
-| **Demo Family Seed Generation** | IMPLEMENTED (Unverified) | `backend/app/seed.py` | Code Exists | Generates 8-person fictional family (George, Anna, Joseph, Leena, etc.). |
-| **Local Graph Snapshot Storage** | IMPLEMENTED (HTTP Tested) | `backend/app/database.py` | THAR-005 Integration Tests | Persisted graph reload and revision rejection are covered. |
-| **Neo4j Graph Repository** | IMPLEMENTED (Unverified) | `backend/app/database.py` | Code Exists | Full atomic graph replacement using Neo4j write transaction and family root locking. Untested against live Neo4j. |
-| **Frontend Web Workspace & UI** | IMPLEMENTED (Spatial Canvas & Demo) | `frontend/app/`<br>`frontend/components/`<br>`frontend/data/` | Code Exists & Builds | Spatial App Router canvas, warm light-first tokens, first-run "Start with you" canvas, floating conversational AI composer, and 3-generation interactive constellation demo. `next build` passes. |
-| **Frontend Interactive Graph Visualization** | PLANNED | `frontend/package.json` | Dependencies Only | `@xyflow/react` and `@dagrejs/dagre` installed; full interactive canvas scheduled for KIN-007. |
-| **Automated End-to-End Tests** | NOT CONFIGURED | `frontend/` | Missing | Playwright installed in `package.json`; no test suites written. |
-
----
-
-## 4. Engineering Baseline Summary
-
-### Validation Commands & Results
-
-| Tool / Check | Command Executed | Result | Exit Code | Details |
-| :--- | :--- | :--- | :--- | :--- |
-| **Backend Import** | `python -c "import app.main"` | **PASS** | 0 | All Python modules compile and initialize FastAPI app without runtime errors. |
-| **Backend Suite** | `pytest backend/tests -q` | **PASS** | 0 | 103 passed: 88 domain/unit tests plus 15 THAR-005 HTTP integration tests. |
-| **Backend Lint** | `ruff check backend` | **PASS** | 0 | All checks passed with zero errors/warnings (configured via pyproject.toml). |
-| **Backend Typecheck** | `mypy` / `pyright` | **NOT CONFIGURED** | N/A | No typechecker configuration or dependency installed. |
-| **Frontend Typecheck** | `npm run typecheck` (`tsc --noEmit`) | **PASS** | 0 | TypeScript strict check passed with 0 errors. |
-| **Frontend Lint** | `npm run lint` (`eslint .`) | **PASS** | 0 | ESLint flat config passed with 0 errors and 0 warnings. |
-| **Frontend Build** | `npm run build` (`next build`) | **PASS** | 0 | Next.js App Router standalone production bundle built successfully. |
-| **Frontend E2E Tests** | `npm test` (`playwright test`) | **FAIL (No tests)** | 1 | "Error: No tests found". |
-
----
-
-## 5. Security & Risk Register
-
-| Risk ID | Severity | Area | Description | Remediation |
-| :--- | :--- | :--- | :--- | :--- |
-| **SEC-01** | **MEDIUM** | Rate Limiting | `rate_limit()` in `backend/app/main.py` uses an in-memory dictionary keyed by client IP (`attempts = {}`). In multi-worker or restarted environments, limits are bypassed. IP spoofing possible behind proxies if `request.client.host` is trusted without validated headers. | Introduce Redis/database-backed rate limiting or edge proxy enforcement before production multi-worker deployment. |
-| **SEC-02** | **MEDIUM** | Session Expiration & Invalidation | Expired sessions are not automatically pruned from the `sessions` SQL table on a schedule. Session IDs are SHA-256 hashed, which is good practice. | Implement a periodic cleanup job or DB trigger for expired sessions. |
-| **SEC-03** | **LOW** | Client Request Header Spoofing | CSRF safeguard relies on `x-tharavadu-client: web` and `Origin` header matching `config.app_origin`. If behind misconfigured reverse proxies, `Origin` header checks require strict normalization. | Validate proxy configuration and enforce SameSite cookies on all deployment targets. |
-| **SEC-04** | **LOW** | Secret Configuration Defaults | Default configuration in `config.py` sets empty strings for `neo4j_password` and `openai_api_key`. While secure by default (fails closed), production setups must fail fast on startup if required credentials are empty. | Add startup configuration validation in `lifespan` when provider is set to `openai` or `neo4j`. |
-
----
-
-## 6. Technical Debt Register
-
-1. **Test Infrastructure [RESOLVED for Domain in KIN-002; HTTP API in THAR-005]:** The 88 domain tests and isolated HTTP API integration suite cover the local backend. Live Neo4j/PostgreSQL and browser E2E tests remain separate work.
-2. **Frontend Foundation [RESOLVED in KIN-004]:** Scaffolded Next.js App Router, warm constellation design system, and interactive fictional preview. Production React Flow interactive canvas scheduled for KIN-007.
-3. **Lint Configuration Gap [RESOLVED in KIN-001]:** Configured `extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]` in `pyproject.toml` and migrated regex aliases to `re.IGNORECASE`.
-4. **Graph Replacement Strategy in Neo4j:** `Neo4jGraphRepository.save()` executes a full `MATCH (p:Person) DETACH DELETE p` and reconstructs all nodes and edges per commit. While capped at 500 nodes for MVP, this approach creates large write transactions and churn in Neo4j transaction logs.
-5. **No Migration Tooling:** Schema is declared via SQLAlchemy Table objects and created with `metadata.create_all()`. No Alembic migration scripts exist for evolving database schemas.
-6. **Developer Setup & Environment [RESOLVED in KIN-003]:** Created `.env.example` template and comprehensive root `README.md` documenting zero-dependency local SQLite mode and optional external service integrations.
-
----
-
-## 7. Infrastructure & Deployment State
-
-- **Current Environment:** Windows local workstation (`powershell`). Python virtual environment active at `.venv/` (Python 3.14.7). Node.js v24.20.0 and npm 11.19.0.
-- **Databases:** SQLite configured as default `database_url = "sqlite:///./tharavadu.db"`. No PostgreSQL or Neo4j containers currently running.
-- **Docker / Compose:** No `docker-compose.yml` or `Dockerfile` present in repository despite references in `docs/ARCHITECTURE.md`.
-- **CI/CD:** No GitHub Actions or automated workflow files exist (`.github/` directory missing).
+The app is suitable for local evaluation and contribution. Production deployment still needs migration tooling, external database integration tests, shared rate limiting for multiple workers, operational backup/restore guidance, and broader browser testing. See [ADR-0004](adr/ADR-0004-person-removal-memory-retention.md) for memory behavior on person removal.

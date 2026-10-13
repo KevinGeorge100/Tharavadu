@@ -94,22 +94,29 @@ function TharavaduAppContent() {
   const [bloomPersonIds, setBloomPersonIds] = useState<string[]>([]);
   const [bloomToken, setBloomToken] = useState(0);
   const proposalLock = useRef(false);
+  const graphRequest = useRef(0);
   const handleLiveAuthExpired = useCallback(() => {
+    graphRequest.current += 1;
     setUser(null);
     setAuthModalOpen(true);
   }, []);
 
   // Load families and their graphs
   const loadFamiliesAndGraph = useCallback(async (preferFamilyId?: string) => {
+    const request = ++graphRequest.current;
     try {
       setLiveError(null);
       const fams = await listFamilies();
+      if (request !== graphRequest.current) return;
       setFamilies(fams);
       if (fams.length > 0) {
         const selected = preferFamilyId ? fams.find((f) => f.id === preferFamilyId) || fams[0] : fams[0];
         setActiveFamily(selected);
         setGraphLoading(true);
+        setLiveGraph(null);
+        setLiveGraphData(null);
         const g = await getFamilyGraph(selected.id);
+        if (request !== graphRequest.current) return;
         const adapted = backendGraphToCanvas(g, selected.self_id);
         setLiveGraph(g);
         setLiveGraphData(adapted);
@@ -119,13 +126,14 @@ function TharavaduAppContent() {
         setLiveGraphData(null);
       }
     } catch (err: unknown) {
+      if (request !== graphRequest.current) return;
       if (err instanceof ApiError && err.status === 401) {
         setUser(null);
       } else if (err instanceof Error) {
         setLiveError(err.message);
       }
     } finally {
-      setGraphLoading(false);
+      if (request === graphRequest.current) setGraphLoading(false);
     }
   }, []);
 
@@ -154,23 +162,30 @@ function TharavaduAppContent() {
   const handleSelectFamily = async (familyId: string) => {
     const fam = families.find((f) => f.id === familyId);
     if (!fam) return;
+    const request = ++graphRequest.current;
     setActiveFamily(fam);
     setBloomPersonIds([]);
     setSelectedPersonId(null);
+    setLiveGraph(null);
+    setLiveGraphData(null);
+    setLiveError(null);
     setGraphLoading(true);
     try {
       const g = await getFamilyGraph(fam.id);
+      if (request !== graphRequest.current) return;
       const adapted = backendGraphToCanvas(g, fam.self_id);
       setLiveGraph(g);
       setLiveGraphData(adapted);
     } catch (err: unknown) {
+      if (request !== graphRequest.current) return;
       if (err instanceof Error) setLiveError(err.message);
     } finally {
-      setGraphLoading(false);
+      if (request === graphRequest.current) setGraphLoading(false);
     }
   };
 
   const handleLogout = async () => {
+    graphRequest.current += 1;
     try {
       await logout();
     } catch {
@@ -181,6 +196,7 @@ function TharavaduAppContent() {
     setActiveFamily(null);
     setLiveGraph(null);
     setLiveGraphData(null);
+    setGraphLoading(false);
     setPendingProposal(null);
     setProposalPhase("idle");
     setIdentityRef(null);

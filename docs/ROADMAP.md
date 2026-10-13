@@ -1,139 +1,19 @@
-# Tharavadu Product & Technical Roadmap
+# Tharavadu roadmap
 
-This roadmap organizes the evolution of Tharavadu from its current prototype state into a production-grade, AI-assisted personal genealogy workspace.
+The local-first MVP stack through THAR-012 is implemented. See [Project Status](PROJECT_STATUS.md) for verified checks and current limits. Roadmap entries are intentions, not shipped features.
 
----
+## Completed
 
-## Milestone Overview
+- KIN-001–004: backend baseline, domain tests, setup, and Living Heirloom canvas.
+- THAR-005–008: HTTP integration tests, live frontend/backend connection, human-reviewed proposals, and deterministic kinship trails.
+- THAR-009–010: family memories and safe corrections in local mode.
+- THAR-011: isolated desktop/mobile browser journeys and GitHub Actions workflow.
+- THAR-012: accurate release documentation, contributor templates, local Compose path, multi-viewport polish, and security/robustness review.
 
-```mermaid
-timeline
-    title Tharavadu Development Milestones
-    section Stabilization
-        M0 : Governance & Baseline : Ruff Fixes : Backend Unit Tests
-    section Core Validation
-        M1 : API Integration Tests : Frontend App Shell : Offline Parsing Validation
-    section MVP Completion
-        M2 : Graph Visualizer (@xyflow) : Disambiguation UI : Kinship Explorer : Memories
-    section Hardening
-        M3 : Security Hardening : Persistent Rate Limiter : Session Pruning : Neo4j Harness
-    section Production
-        M4 : Docker Compose : PostgreSQL/Neo4j Integration : CI/CD Pipeline : Playwright E2E
-    section Scale & Growth
-        M5 : Incremental Cypher Diffing : Multi-language NLP : Media Attachments : GEDCOM Export
-```
+## Next priorities
 
----
+1. Validate container startup and persistence on a host with Docker Engine; add an automated Compose smoke check if stable.
+2. Add live PostgreSQL/Neo4j integration tests and decide atomic person-removal behavior in Neo4j mode. Keep local mode as the default.
+3. Add operational hardening for public deployments: schema migrations, backup/restore guidance, shared rate limiting, and session cleanup.
 
-## M0 — Repository Stabilization & Engineering Baseline
-
-**Goal:** Establish a solid engineering foundation, eradicate lint errors, establish a 100% passing test baseline for domain logic, and lock down configuration hygiene.
-
-- [x] **KIN-001 (P0): Backend Lint & Code Quality Configuration**
-  - Configure Ruff in `pyproject.toml` or `ruff.toml` to recognize `fastapi.Depends` as immutable (`extend-immutable-calls`).
-  - Fix regex alias warnings (`re.I` -> `re.IGNORECASE`).
-  - Achieve clean `ruff check backend` with 0 warnings/errors.
-- [x] **KIN-002 (P0): Backend Domain & Kinship Unit Test Suite**
-  - Author comprehensive `pytest` suite for `backend/app/domain.py` (kinship classification, cousins, in-laws, great-relatives).
-  - Test cycle detection (circular ancestry DFS) and sibling invariants.
-  - Test homonym detection and identity resolution edge cases.
-- [x] **KIN-003 (P0): Environment & Developer Configuration**
-  - Create `.env.example` documenting all configuration options (`DATABASE_URL`, `GRAPH_BACKEND`, `AI_PROVIDER`, `OPENAI_API_KEY`, `APP_ORIGIN`, etc.).
-  - Document local setup commands in a top-level `README.md`.
-
-**Acceptance Criteria for M0:**
-- `ruff check backend` passes with 0 issues.
-- `pytest` executes a minimum of 25 comprehensive unit tests with 100% pass rate.
-- Clear environment documentation and developer bootstrapping guide.
-
----
-
-## M1 — Core Product Validation & API Harness
-
-**Goal:** Validate all FastAPI endpoints via automated integration tests and establish the Next.js frontend scaffolding.
-
-- [x] **KIN-004 (P0): Frontend Foundation & Family Exploration Canvas** — implemented on its task branch; awaiting review and merge.
-  - Established the Next.js App Router shell and warm spatial family exploration canvas.
-  - Verified frontend typecheck, lint, and build on the KIN-004 branch.
-- [x] **THAR-005 (P0): FastAPI API Integration Test Suite** — implemented on a branch stacked on KIN-004; awaiting review and merge.
-  - Exercise auth, family isolation, proposal review, homonym resolution, graph invariants, stale revisions, relationship evidence, and memories through `httpx.ASGITransport`.
-  - Use an isolated SQLite database and offline extraction for each test; no external services.
-- [ ] **KIN-006 (P1): Offline NLP Extraction Test Suite**
-  - Comprehensive unit testing for `OfflineProvider` regex grammar patterns.
-  - Boundary test failure cases (rejecting unconsumed text, missing names).
-
-**Acceptance Criteria for M1:**
-- `pytest` executes end-to-end API lifecycle tests with 100% pass rate.
-- `frontend/` compiles successfully with `npm run build` producing zero build errors.
-
----
-
-## M2 — MVP Completion (Interactive Web Workspace)
-
-**Goal:** Deliver a functional, interactive user interface connecting the Next.js frontend to the backend API.
-
-- [ ] **KIN-007 (P1): Interactive Family Graph Visualizer**
-  - Implement canvas component using `@xyflow/react` and `@dagrejs/dagre` for automated hierarchical layout.
-  - Render custom person nodes displaying name, gender, birth/death dates, and connection handles.
-  - Support zoom, pan, fit-to-view, and node selection.
-- [ ] **KIN-008 (P1): Proposal Review & Disambiguation Panel**
-  - Conversational input drawer for entering relationship statements.
-  - Interactive proposal diff viewer showing proposed additions and warnings before confirmation.
-  - Disambiguation modal allowing users to resolve homonyms (choose existing person vs create new).
-- [ ] **KIN-009 (P1): Kinship Query & Relationship Explorer UI**
-  - Query input bar supporting natural language kinship questions ("Who is Raj to me?", "Show my cousins").
-  - Two-person relationship picker with animated path highlight on the `@xyflow` canvas.
-  - Explanation panel displaying canonical relationship label and textual evidence chain.
-- [ ] **KIN-010 (P2): Family Story & Memory Journal UI**
-  - Memory feed panel with author, timestamp, and tagged person badges.
-  - Memory creation dialog with person tag selector.
-  - Instant client-side and server-side text search over memories.
-
-**Acceptance Criteria for M2:**
-- Full user journey verified: Register -> Create Family -> Add narrative -> Review proposal -> Confirm -> Explore graph -> Query kinship -> Add memory.
-- UI tested on desktop, tablet, and mobile viewports.
-
----
-
-## M3 — Reliability, Security & Persistence Hardening
-
-**Goal:** Resolve identified technical debt, harden security boundaries, and validate Neo4j graph repository.
-
-- [ ] **KIN-011 (P1): Neo4j Integration Test Harness**
-  - Automated integration tests for `Neo4jGraphRepository` validating atomic replacement, family root locking, and revision checks.
-  - Fallback and error reporting verification when Neo4j is offline.
-- [ ] **KIN-012 (P2): Session Invalidation & Scheduled Cleanup**
-  - Periodic background task or database query to purge expired session records.
-  - Enforce session revocation on password changes.
-- [ ] **KIN-013 (P2): Production Rate Limiting**
-  - Replace in-memory dictionary with a persistent or distributed rate limiter (token bucket or Redis) to protect against brute-force attacks across multi-worker deployments.
-- [ ] **KIN-014 (P2): Database Schema Migrations**
-  - Integrate Alembic for SQL schema migrations to support future schema evolution safely.
-
----
-
-## M4 — Production Readiness & Deployment
-
-**Goal:** Package Tharavadu for reproducible deployment, automated CI/CD verification, and end-to-end browser testing.
-
-- [ ] **KIN-015 (P1): Playwright End-to-End Test Suite**
-  - Automated Playwright browser tests covering authentication, graph rendering, proposal confirmation, and query inspection across Chromium, Firefox, and WebKit.
-  - Visual regression and viewport testing (desktop, tablet, mobile).
-- [ ] **KIN-016 (P2): Docker & Compose Packaging**
-  - Author multi-stage `Dockerfile` for backend (FastAPI) and frontend (Next.js standalone).
-  - Author `docker-compose.yml` orchestrating Next.js, FastAPI, PostgreSQL, and Neo4j.
-- [ ] **KIN-017 (P2): CI/CD Pipeline**
-  - GitHub Actions workflow running Ruff, Pytest, Next.js build, TypeScript typecheck, and Playwright tests on every PR.
-
----
-
-## M5 — Scale & Advanced Capabilities (Future)
-
-**Goal:** Expand feature set for larger families and richer genealogical data.
-
-- [ ] **KIN-018 (P3): Incremental Cypher Graph Mutations**
-  - Transition from full family graph replacement to delta/diff-based Cypher mutations for larger families (>500 members).
-- [ ] **KIN-019 (P3): Standard Genealogical Format Import/Export**
-  - GEDCOM 5.5.1 / 7.0 import and export parser.
-- [ ] **KIN-020 (P3): Media & Artifact Attachments**
-  - Secure document and photo uploads attached to family members and memories with object storage (S3/GCS) integration.
+Later work may include GEDCOM import/export, multilingual extraction, media attachments, and more browser engines. These are not part of the current MVP.

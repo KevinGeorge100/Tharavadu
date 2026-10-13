@@ -1,6 +1,6 @@
 # Tharavadu Engineering Backlog
 
-This backlog maintains the authoritative, prioritized registry of planned work for Tharavadu. Every implementation task undertaken by human or AI contributors must trace directly to a backlog item in this document.
+This is the historical engineering backlog from the prototype phase. Several item statuses below predate the integrated MVP. Use [Project Status](PROJECT_STATUS.md) and [Roadmap](ROADMAP.md) for the current implementation and priorities.
 
 ---
 
