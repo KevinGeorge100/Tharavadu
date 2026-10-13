@@ -1,0 +1,24 @@
+import { defineConfig } from "@playwright/test";
+import { existsSync } from "node:fs";
+import path from "node:path";
+
+const repo = path.resolve(__dirname, "..");
+const localPython = path.join(repo, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
+const python = process.env.THAR_PYTHON || (existsSync(localPython) ? localPython : "python");
+
+export default defineConfig({
+  testDir: "./e2e", timeout: 60000, expect: { timeout: 10000 },
+  fullyParallel: false, workers: 1, retries: process.env.CI ? 1 : 0,
+  reporter: [["list"], ["html", { open: "never" }]],
+  use: { baseURL: "http://127.0.0.1:3010", trace: "retain-on-failure", screenshot: "only-on-failure",
+    channel: process.env.PLAYWRIGHT_CHANNEL || undefined },
+  projects: [
+    { name: "desktop", use: { browserName: "chromium", viewport: { width: 1280, height: 800 } } },
+    { name: "mobile", use: { browserName: "chromium", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
+  ],
+  webServer: [
+    { command: `"${python}" scripts/e2e_backend.py`, cwd: repo, url: "http://127.0.0.1:8010/api/health", reuseExistingServer: false, timeout: 30000 },
+    { command: "npm run build && node node_modules/next/dist/bin/next start --hostname 127.0.0.1 -p 3010", cwd: __dirname,
+      env: { API_URL: "http://127.0.0.1:8010" }, url: "http://127.0.0.1:3010", reuseExistingServer: false, timeout: 180000 },
+  ],
+});

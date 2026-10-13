@@ -398,6 +398,10 @@ a {
 }
 
 @media (min-width: 769px) {
+  .kin-desktop-inspector {
+    display: flex;
+  }
+
   .kin-mobile-sheet {
     display: none;
   }

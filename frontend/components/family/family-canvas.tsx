@@ -674,7 +674,6 @@ function FamilyCanvasInner({
             bottom: 176,
             right: 16,
             zIndex: 30,
-            display: "flex",
             flexDirection: "column",
             gap: 8,
             maxWidth: 280,
