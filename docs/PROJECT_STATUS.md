@@ -1,6 +1,6 @@
-# Project status — October 13, 2026
+# Project status — October 14, 2026
 
-Tharavadu has an integrated, local-first MVP through THAR-012. The live Next.js workspace connects to FastAPI for accounts, families, proposals, graph exploration, kinship trails, memories, and corrections. The demo remains available without an account.
+Tharavadu has an integrated, local-first MVP through THAR-013. The live Next.js workspace connects to FastAPI for accounts, families, proposals, graph exploration, kinship trails, memories, and corrections. The demo remains available without an account.
 
 | Area | Verified state | Boundary |
 | --- | --- | --- |
@@ -12,6 +12,6 @@ Tharavadu has an integrated, local-first MVP through THAR-012. The live Next.js 
 | Memories | Create, list, delete, persistence, family isolation | Text memories; no file attachments |
 | Corrections | Edit person, remove edge, remove person in local mode | Neo4j person deletion returns 501 until cross-store atomicity is solved |
 | CI | Workflow added for backend, frontend, and E2E on PR/push to main; the THAR-011 main run succeeded | THAR-012 hosted run result should be checked separately |
-| Containers | Local SQLite Compose configuration passes static validation | Docker Engine runtime verification pending |
+| Containers | Clean Compose build and live browser journey pass; SQLite graph and memory survive restart and container recreation on the named volume; `down -v` clears the account and allows fresh registration | Local Compose evaluation only, not a production deployment test |
 
 The app is suitable for local evaluation and contribution. Production deployment still needs migration tooling, external database integration tests, shared rate limiting for multiple workers, operational backup/restore guidance, and broader browser testing. See [ADR-0004](adr/ADR-0004-person-removal-memory-retention.md) for memory behavior on person removal.

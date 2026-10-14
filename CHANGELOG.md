@@ -4,6 +4,7 @@ This project is pre-1.0. Entries describe completed work on `main`; see [Project
 
 ## Unreleased
 
+- THAR-013: verified the local Docker Compose build, containerized product journey, SQLite volume persistence, and explicit volume reset; documented the tested lifecycle.
 - THAR-012: release documentation and contributor templates; local-first Docker Compose configuration; wide viewport browser coverage; family-switch request ordering, multi-generation canvas fit, and streamed request-size enforcement.
 
 ## October 2026 MVP stack

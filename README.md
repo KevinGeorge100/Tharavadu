@@ -57,7 +57,7 @@ If Docker Engine is running, the local-first container path is:
 docker compose up --build
 ```
 
-Visit [http://localhost:3000](http://localhost:3000). Compose uses only the frontend, backend, and a named SQLite volume. It does not require `.env`, a cloud account, or an AI key. Stop with `docker compose down`; omit `--volumes` if you want to retain family data. This container path is provided for local use and has not yet been runtime-verified on a machine with Docker Engine.
+Visit [http://localhost:3000](http://localhost:3000); the backend health endpoint is [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health). Compose uses only the frontend, backend, and the named `tharavadu_tharavadu_data` SQLite volume. It does not require `.env`, a cloud account, or an AI key. `docker compose down` stops the stack and retains family data; `docker compose up -d` brings it back. **`docker compose down -v` permanently removes the local family database.** The container flow was verified with account creation, story confirmation, memory persistence, restart, container recreation, and a volume reset on October 14, 2026.
 
 ## Configuration
 
