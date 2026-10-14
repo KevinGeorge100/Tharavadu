@@ -1,9 +1,10 @@
 # Changelog
 
-This project is pre-1.0. Entries describe completed work on `main`; see [Project Status](docs/PROJECT_STATUS.md) for current validation and limitations.
+This project is pre-1.0. Unreleased entries include completed task-branch work; see [Project Status](docs/PROJECT_STATUS.md) for current validation and limitations.
 
 ## Unreleased
 
+- THAR-014: corrected generation layout and partner links, framed new branches and kinship trails, diversified local portraits, improved mobile story entry and dialog keyboard behavior, suppressed identifier-bearing container access logs, and expanded browser coverage to five viewport sizes.
 - THAR-013: verified the local Docker Compose build, containerized product journey, SQLite volume persistence, and explicit volume reset; documented the tested lifecycle.
 - THAR-012: release documentation and contributor templates; local-first Docker Compose configuration; wide viewport browser coverage; family-switch request ordering, multi-generation canvas fit, and streamed request-size enforcement.
 
