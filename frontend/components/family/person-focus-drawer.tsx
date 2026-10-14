@@ -48,7 +48,7 @@ export function PersonFocusDrawer({
 
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
         <div>
-          <p className="kin-stamp" style={{ fontSize: "0.62rem", color: member.branchColor }}>
+          <p className="kin-stamp" style={{ fontSize: "0.62rem", color: "var(--text-secondary)", borderLeft: `4px solid ${member.branchColor}`, paddingLeft: 6 }}>
             {member.branchName}
           </p>
           <h2

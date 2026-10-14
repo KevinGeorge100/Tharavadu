@@ -54,21 +54,17 @@ export function computeGraphPositions(
   }
 
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: "TB", nodesep: 80, ranksep: 120 });
+  g.setGraph({ rankdir: "TB", nodesep: 64, ranksep: 84 });
   g.setDefaultEdgeLabel(() => ({}));
 
   people.forEach((p) => {
     g.setNode(p.id, { width: 220, height: 260 });
   });
 
+  // Only parent links advance a generation. Spouse and sibling links are drawn
+  // later, but must not push partners or siblings into separate Dagre ranks.
   edges.forEach((e) => {
-    if (e.type === "PARENT_OF") {
-      g.setEdge(e.source, e.target);
-    } else if (e.type === "SPOUSE_OF") {
-      g.setEdge(e.source, e.target, { weight: 2 });
-    } else if (e.type === "SIBLING_OF") {
-      g.setEdge(e.source, e.target, { weight: 1 });
-    }
+    if (e.type === "PARENT_OF") g.setEdge(e.source, e.target);
   });
 
   dagre.layout(g);

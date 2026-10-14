@@ -823,6 +823,7 @@ function TharavaduAppContent() {
             <TharavaduComposer
               key={activeFamily.id}
               onSubmitStory={handleLiveStory}
+              onFocusStory={() => setSelectedPersonId(null)}
               busy={proposalPhase === "submitting"}
               showDemoPrompts={false}
               error={proposalPhase === "error" ? proposalError : null}
@@ -886,7 +887,7 @@ function TharavaduAppContent() {
               zIndex: 20,
             }}
           >
-            <TharavaduComposer onSubmitStory={handleStorySubmitted} onSelectPromptStory={handlePromptStorySelect} />
+            <TharavaduComposer onSubmitStory={handleStorySubmitted} onSelectPromptStory={handlePromptStorySelect} onFocusStory={() => setSelectedPersonId(null)} />
           </div>
         )}
       </main>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { PersonPortrait } from "@/components/family/person-portrait";
+import { useModalFocus } from "@/lib/use-modal-focus";
 
 export type CollisionChoice = "george-davis" | "george-miller" | "new";
 
@@ -36,13 +37,17 @@ const CANDIDATES: {
 ];
 
 export function IdentityCollision({ onChoose, onDismiss, candidateName, candidates }: IdentityCollisionProps) {
+  const dialogRef = useModalFocus(onDismiss, "button[aria-label]:not([aria-label='Close'])");
   const choices: { id: string; name: string; context: string; color?: string; portrait?: "silhouette-uncle" | "silhouette-father" }[] = candidates || CANDIDATES.map((person) => ({
     id: person.id, name: person.name, context: person.relation, color: person.color, portrait: person.portrait,
   }));
   return (
     <div
+      ref={dialogRef}
       role="dialog"
+      aria-modal="true"
       aria-labelledby="identity-collision-title"
+      tabIndex={-1}
       style={{
         width: "100%",
         maxWidth: "520px",
@@ -88,7 +93,7 @@ export function IdentityCollision({ onChoose, onDismiss, candidateName, candidat
           marginTop: 14,
         }}
       >
-        {choices.map((person) => (
+        {choices.map((person, index) => (
           <button
             key={person.id}
             type="button"
@@ -102,7 +107,7 @@ export function IdentityCollision({ onChoose, onDismiss, candidateName, candidat
               minHeight: 44,
             }}
           >
-            <PersonPortrait type={person.portrait || "silhouette-uncle"} color={person.color || "var(--branch-sage)"} size={148} />
+            <PersonPortrait type={person.portrait || "silhouette-uncle"} color={person.color || "var(--branch-sage)"} size={148} variant={index} />
             <div style={{ padding: "8px 10px 10px" }}>
               <div style={{ fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: "0.95rem" }}>{person.name}</div>
               <div style={{ fontSize: "0.75rem", fontWeight: 700, color: person.color || "var(--branch-sage)", marginTop: 2 }}>

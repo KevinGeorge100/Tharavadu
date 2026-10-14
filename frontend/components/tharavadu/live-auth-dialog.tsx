@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { login, register } from "@/lib/api/auth";
 import { ApiError, User } from "@/lib/api/types";
+import { useModalFocus } from "@/lib/use-modal-focus";
 
 interface LiveAuthDialogProps {
   onSuccess: (user: User) => void;
@@ -10,6 +11,7 @@ interface LiveAuthDialogProps {
 }
 
 export function LiveAuthDialog({ onSuccess, onDismiss }: LiveAuthDialogProps) {
+  const dialogRef = useModalFocus(onDismiss, "#auth-email");
   const [tab, setTab] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,8 +51,11 @@ export function LiveAuthDialog({ onSuccess, onDismiss }: LiveAuthDialogProps) {
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
+      aria-modal="true"
       aria-labelledby="auth-dialog-title"
+      tabIndex={-1}
       style={{
         width: "100%",
         maxWidth: "440px",

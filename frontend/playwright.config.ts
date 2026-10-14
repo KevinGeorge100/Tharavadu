@@ -14,7 +14,9 @@ export default defineConfig({
     channel: process.env.PLAYWRIGHT_CHANNEL || undefined },
   projects: [
     { name: "desktop", use: { browserName: "chromium", viewport: { width: 1280, height: 800 } } },
+    { name: "laptop", testMatch: /responsive\.spec\.ts$/, use: { browserName: "chromium", viewport: { width: 1440, height: 900 } } },
     { name: "wide", use: { browserName: "chromium", viewport: { width: 1920, height: 1080 } } },
+    { name: "tablet", testMatch: /responsive\.spec\.ts$/, use: { browserName: "chromium", viewport: { width: 768, height: 1024 }, hasTouch: true } },
     { name: "mobile", use: { browserName: "chromium", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
   ],
   webServer: [

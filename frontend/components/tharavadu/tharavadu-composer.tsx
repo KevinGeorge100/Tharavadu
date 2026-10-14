@@ -10,6 +10,7 @@ interface TharavaduComposerProps {
   busy?: boolean;
   showDemoPrompts?: boolean;
   error?: string | null;
+  onFocusStory?: () => void;
 }
 
 export function TharavaduComposer({
@@ -19,8 +20,10 @@ export function TharavaduComposer({
   busy = false,
   showDemoPrompts = true,
   error,
+  onFocusStory,
 }: TharavaduComposerProps) {
   const [input, setInput] = useState(initialStory || "");
+  const [focused, setFocused] = useState(false);
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -46,7 +49,7 @@ export function TharavaduComposer({
         gap: 8,
       }}
     >
-      {showDemoPrompts && <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingInline: 2 }}>
+      {showDemoPrompts && !input.trim() && <div role="group" aria-label="Suggested stories" style={{ display: "flex", gap: 6, overflowX: "auto", paddingInline: 2 }}>
         {DEMO_PROMPT_STORIES.map((item) => (
           <button
             key={item.id}
@@ -84,7 +87,7 @@ export function TharavaduComposer({
         <p className="kin-stamp" style={{ fontSize: "0.72rem", marginBottom: 8 }}>
           Tell Tharavadu a story
         </p>
-        <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+        <div className="kin-composer-entry" style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
           <label htmlFor="tharavadu-story-input" className="sr-only" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden" }}>
             Family story
           </label>
@@ -92,12 +95,21 @@ export function TharavaduComposer({
             id="tharavadu-story-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onFocus={() => { setFocused(true); onFocusStory?.(); }}
+            onBlur={() => setFocused(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
             disabled={busy}
             maxLength={6000}
             placeholder={showDemoPrompts ? "My grandfather Joseph had two brothers called Mathew and Thomas." : "My father is Joseph."}
-            rows={1}
+            rows={focused ? 3 : 1}
             style={{
               flex: 1,
+              minWidth: 0,
               border: "var(--outline-thin) solid var(--ink)",
               background: "var(--cream-hot)",
               fontFamily: "var(--font-serif)",
@@ -105,10 +117,11 @@ export function TharavaduComposer({
               padding: "10px 10px",
               resize: "none",
               minHeight: 44,
+              maxHeight: 180,
               color: "var(--ink)",
             }}
           />
-          <button type="submit" disabled={!input.trim() || busy} className="kin-press" style={{ padding: "10px 14px", minWidth: 92, minHeight: 44 }}>
+          <button type="submit" disabled={!input.trim() || busy} className="kin-press" style={{ padding: "10px 14px", minWidth: 92, minHeight: 44, whiteSpace: "nowrap" }}>
             {busy ? "Listening…" : "Tell Tharavadu →"}
           </button>
         </div>

@@ -128,6 +128,14 @@ function zoomToBand(zoom: number): ZoomBand {
   return "medium";
 }
 
+function edgeHandles(edge: CanvasEdge, positions: Record<string, { x: number; y: number }>) {
+  if (edge.type === "parent") return { sourceHandle: "parent-source", targetHandle: "parent-target" };
+  const sourceLeft = (positions[edge.source]?.x ?? 0) <= (positions[edge.target]?.x ?? 0);
+  return sourceLeft
+    ? { sourceHandle: "side-right-source", targetHandle: "side-left-target" }
+    : { sourceHandle: "side-left-source", targetHandle: "side-right-target" };
+}
+
 function FamilyCanvasInner({
   liveMemories,
   onOpenMemories,
@@ -279,17 +287,19 @@ function FamilyCanvasInner({
       return () => window.clearTimeout(clearTimer);
     }
     const sequence = activeDiscoveryPath.highlightNodeIds;
+    const focusTimer = window.setTimeout(() => {
+      if (sequence.length) fitView({ nodes: sequence.map((id) => ({ id })), padding: 0.3, duration: 450, minZoom: 0.35, maxZoom: 1 });
+    }, 40);
     const timers = sequence.map((nodeId, index) =>
       window.setTimeout(() => {
         setRevealedTrailNodes((current) => (index === 0 ? [nodeId] : [...(current ?? []), nodeId]));
-        if (liveFamilyId) {
-          const node = getNode(nodeId);
-          if (node) setCenter(node.position.x + 84, node.position.y + 110, { zoom: 0.92, duration: 360 });
-        }
       }, 420 * index)
     );
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, [activeDiscoveryPath, replayToken, liveFamilyId, getNode, setCenter]);
+    return () => {
+      window.clearTimeout(focusTimer);
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [activeDiscoveryPath, replayToken, fitView]);
 
   useEffect(() => {
     if (!isNewBranchAdded) return;
@@ -313,9 +323,15 @@ function FamilyCanvasInner({
       setIsGrowing(true);
     }, 0);
     const frame = window.setTimeout(() => {
-      const branchNodes = bloomPersonIds.map((id) => getNode(id)).filter((node): node is Node => Boolean(node));
+      const newIds = new Set(bloomPersonIds);
+      const branchIds = new Set(bloomPersonIds);
+      customEdges?.forEach((edge) => {
+        if (newIds.has(edge.source)) branchIds.add(edge.target);
+        if (newIds.has(edge.target)) branchIds.add(edge.source);
+      });
+      const branchNodes = [...branchIds].map((id) => getNode(id)).filter((node): node is Node => Boolean(node));
       if (branchNodes.length) {
-        fitView({ nodes: branchNodes, padding: 0.65, duration: 550, minZoom: 0.55, maxZoom: 1.1 });
+        fitView({ nodes: branchNodes, padding: 0.35, duration: 550, minZoom: 0.4, maxZoom: 1.05 });
       }
     }, 220);
     const finish = window.setTimeout(() => setIsGrowing(false), 950);
@@ -326,7 +342,7 @@ function FamilyCanvasInner({
       window.clearTimeout(finish);
       window.clearTimeout(hide);
     };
-  }, [bloomToken, bloomPersonIds, fitView, getNode]);
+  }, [bloomToken, bloomPersonIds, customEdges, fitView, getNode]);
 
   const handleMove = useCallback((_: unknown, viewport: Viewport) => {
     const next = zoomToBand(viewport.zoom);
@@ -452,6 +468,7 @@ function FamilyCanvasInner({
           id: edge.id,
           source: edge.source,
           target: edge.target,
+          ...edgeHandles(edge, customPositions || POSITIONS),
           type: "kinshipEdge",
           data: {
             relationshipType: edge.type,
@@ -500,6 +517,7 @@ function FamilyCanvasInner({
         id: edge.id,
         source: edge.source,
         target: edge.target,
+        ...edgeHandles(edge, POSITIONS),
         type: "kinshipEdge",
         data: {
           relationshipType: edge.type,
@@ -509,7 +527,7 @@ function FamilyCanvasInner({
         },
       };
     });
-  }, [branchAdded, activeDiscoveryPath, selectedPersonId, isGrowing, revealedTrailNodes, customEdges, bloomPersonIds]);
+  }, [branchAdded, activeDiscoveryPath, selectedPersonId, isGrowing, revealedTrailNodes, customEdges, customPositions, bloomPersonIds]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);

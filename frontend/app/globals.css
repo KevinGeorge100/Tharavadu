@@ -26,14 +26,14 @@
   --text-primary: #161310;
   --text-secondary: #3a3228;
   --text-muted: #6b5e4e;
-  --text-faint: #8d7f6c;
+  --text-faint: #6b5e4e;
   --text-inverted: #fff8ea;
 
-  --accent-warm: #e04d12;
-  --accent-warm-hover: #c03e0c;
+  --accent-warm: #c43d0b;
+  --accent-warm-hover: #a53207;
   --accent-warm-soft: #ffd8c4;
-  --accent-warm-border: #e04d12;
-  --accent-warm-ring: rgba(224, 77, 18, 0.35);
+  --accent-warm-border: #c43d0b;
+  --accent-warm-ring: rgba(196, 61, 11, 0.35);
 
   --branch-terracotta: #c44a28;
   --branch-terracotta-soft: #f8d8cc;
@@ -264,6 +264,11 @@ a {
   cursor: pointer;
 }
 
+.kin-person-card:focus-visible {
+  outline: 3px solid var(--accent-warm);
+  outline-offset: 6px;
+}
+
 .react-flow__attribution {
   background: var(--cream) !important;
   padding: 2px 6px !important;
@@ -398,6 +403,11 @@ a {
     top: 8px;
     font-size: 0.72rem;
   }
+}
+
+@media (max-width: 600px) {
+  .kin-composer-entry { flex-direction: column; }
+  .kin-composer-entry textarea, .kin-composer-entry button { width: 100%; }
 }
 
 @media (min-width: 769px) {

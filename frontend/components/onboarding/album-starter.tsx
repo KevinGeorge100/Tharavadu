@@ -73,7 +73,7 @@ export function AlbumStarter({
           }}
         >
           {photoOn ? (
-            <PersonPortrait type="silhouette-nora" color="var(--accent-warm)" size={220} />
+            <PersonPortrait type="silhouette-nora" color="var(--accent-warm)" size={220} isSelf />
           ) : (
             <span className="kin-stamp" style={{ fontSize: "0.72rem" }}>
               Add photo

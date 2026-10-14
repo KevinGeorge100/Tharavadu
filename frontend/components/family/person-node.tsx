@@ -47,6 +47,7 @@ export const PersonNode = memo(function PersonNode({ data }: { data: PersonNodeD
     : member.birthYear ? `b. ${member.birthYear}` : member.deathYear ? `d. ${member.deathYear}` : null;
   const compact = zoomBand === "far";
   const rich = zoomBand === "close" || isSelected;
+  const portraitVariant = [...member.id].reduce((hash, letter) => hash + letter.charCodeAt(0), 0) % 4;
 
   return (
     <div
@@ -56,12 +57,11 @@ export const PersonNode = memo(function PersonNode({ data }: { data: PersonNodeD
       onKeyDown={handleKeyDown}
       aria-label={`${member.name}, ${member.relationLabel}${datesText ? `, ${datesText}` : ""}`}
       aria-pressed={isSelected}
-      className={isBlooming ? "kin-blooming-card" : undefined}
+      className={`kin-person-card${isBlooming ? " kin-blooming-card" : ""}`}
       style={{
         position: "relative",
         width: compact ? 148 : 168,
         cursor: "pointer",
-        outline: "none",
         opacity: isDimmed ? 0.28 : 1,
         filter: isDimmed ? "grayscale(35%)" : "none",
         transform: isSelected
@@ -71,8 +71,12 @@ export const PersonNode = memo(function PersonNode({ data }: { data: PersonNodeD
         zIndex: isSelected ? 40 : isPathHighlighted ? 20 : 10,
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 8, height: 8, top: -2 }} />
-      <Handle type="source" position={Position.Bottom} style={{ opacity: 0, width: 8, height: 8, bottom: -2 }} />
+      <Handle id="parent-target" type="target" position={Position.Top} style={{ opacity: 0, width: 8, height: 8, top: -2 }} />
+      <Handle id="parent-source" type="source" position={Position.Bottom} style={{ opacity: 0, width: 8, height: 8, bottom: -2 }} />
+      <Handle id="side-left-target" type="target" position={Position.Left} style={{ opacity: 0, width: 8, height: 8 }} />
+      <Handle id="side-right-target" type="target" position={Position.Right} style={{ opacity: 0, width: 8, height: 8 }} />
+      <Handle id="side-left-source" type="source" position={Position.Left} style={{ opacity: 0, width: 8, height: 8 }} />
+      <Handle id="side-right-source" type="source" position={Position.Right} style={{ opacity: 0, width: 8, height: 8 }} />
 
       <div
         style={{
@@ -91,7 +95,7 @@ export const PersonNode = memo(function PersonNode({ data }: { data: PersonNodeD
             lineHeight: 0,
           }}
         >
-          <PersonPortrait type={member.portraitType} color={member.branchColor} size={compact ? 148 : 168} />
+          <PersonPortrait type={member.portraitType} color={member.branchColor} size={compact ? 148 : 168} isSelf={member.isUserAnchor} variant={portraitVariant} />
         </div>
 
         <div style={{ padding: compact ? "7px 8px 8px" : "8px 10px 10px" }}>
@@ -115,7 +119,7 @@ export const PersonNode = memo(function PersonNode({ data }: { data: PersonNodeD
                 fontWeight: 800,
                 letterSpacing: "0.04em",
                 textTransform: "uppercase",
-                color: member.isUserAnchor ? "var(--accent-warm)" : member.branchColor,
+                color: member.isUserAnchor ? "var(--accent-warm)" : "var(--text-secondary)",
               }}
             >
               {member.relationLabel}{datesText ? ` · ${datesText}` : ""}

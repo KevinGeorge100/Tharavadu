@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { createFamily } from "@/lib/api/families";
 import { ApiError, Family } from "@/lib/api/types";
+import { useModalFocus } from "@/lib/use-modal-focus";
 
 interface LiveFamilyDialogProps {
   onCreated: (family: Family) => void;
@@ -10,6 +11,7 @@ interface LiveFamilyDialogProps {
 }
 
 export function LiveFamilyDialog({ onCreated, onDismiss }: LiveFamilyDialogProps) {
+  const dialogRef = useModalFocus(onDismiss, "#family-name");
   const [name, setName] = useState("My Family Tharavadu");
   const [personName, setPersonName] = useState("Kevin");
   const [demo, setDemo] = useState(true);
@@ -45,8 +47,11 @@ export function LiveFamilyDialog({ onCreated, onDismiss }: LiveFamilyDialogProps
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
+      aria-modal="true"
       aria-labelledby="family-dialog-title"
+      tabIndex={-1}
       style={{
         width: "100%",
         maxWidth: "460px",

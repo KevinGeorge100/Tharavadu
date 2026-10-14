@@ -53,6 +53,9 @@ test("real product journey, memory isolation, and returning user", async ({ page
   expect(await api(context, "GET", `/api/families/${family.id}/graph`)).toEqual(before);
   await page.getByRole("button", { name: "Looks right →" }).click();
   await page.getByText("NEW BRANCH 🌿", { exact: true }).waitFor();
+  await page.waitForTimeout(700); // Let the branch reframe settle.
+  await expect(page.getByRole("button", { name: /^Kevin,/ })).toBeInViewport({ ratio: 0.8 });
+  await expect(page.getByRole("button", { name: /^Joseph,/ })).toBeInViewport({ ratio: 0.8 });
   await page.reload();
   await choose(page, "Kevin");
   await page.getByRole("button", { name: /^(Find connection|Connect)$/ }).filter({ visible: true }).click();
@@ -61,6 +64,9 @@ test("real product journey, memory isolation, and returning user", async ({ page
   await expect(page.getByText("Joseph is Kevin's father. Joseph is Kevin's parent.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "See why →" }).click();
   await expect(page.getByRole("button", { name: /Joseph is Kevin's parent/ })).toBeVisible();
+  await page.waitForTimeout(700); // The trail animation must leave both endpoints in view.
+  await expect(page.getByRole("button", { name: /^Kevin,/ })).toBeInViewport({ ratio: 0.8 });
+  await expect(page.getByRole("button", { name: /^Joseph,/ })).toBeInViewport({ ratio: 0.8 });
   await page.getByRole("button", { name: "Close kinship trail" }).click();
   await choose(page, "Joseph");
   await page.getByRole("button", { name: /Memories \(0\).*Add memory/ }).filter({ visible: true }).click();
@@ -195,10 +201,17 @@ test("larger demo family and long names fit without document overflow", async ({
   await expect(page.getByRole("button", { name: /^Alexandria Very Long Surname,/ })).toBeVisible();
   await page.getByRole("button", { name: "Fit family to view" }).click();
   await expect(page.getByRole("button", { name: /^George,/ })).toBeVisible();
+  const anna = page.getByRole("button", { name: /^Anna,/ });
+  await expect(anna).toBeVisible();
   await expect(page.getByRole("button", { name: /^Maya,/ })).toBeVisible();
   await page.waitForTimeout(500); // Let the canvas fit animation settle before visual QA.
   const george = page.getByRole("button", { name: /^George,/ });
   const maya = page.getByRole("button", { name: /^Maya,/ });
+  const annaBounds = await anna.boundingBox();
+  const georgePartnerBounds = await george.boundingBox();
+  expect(Math.abs(annaBounds!.y - georgePartnerBounds!.y)).toBeLessThan(georgePartnerBounds!.height);
+  await expect(page.getByRole("button", { name: /^Raj,/ }).locator("svg text")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Alexandria Very Long Surname,/ }).locator("svg text")).toHaveText("YOU");
   await expect(george).toBeInViewport({ ratio: 0.8 });
   await expect(maya).toBeInViewport({ ratio: 0.8 });
   if (testInfo.project.name === "mobile") {
